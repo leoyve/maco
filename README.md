@@ -31,7 +31,6 @@
 
 ---
 
-
 ## 主要功能
 - 透過 Webhook 接收使用者發送的文字訊息。
 - Echo 功能：原封不動回覆訊息。
@@ -128,6 +127,39 @@
   ```bash
   export $(grep -v '^#' .env.dev | xargs) && mvn spring-boot:run
   ```
+
+---
+
+## 專案結構
+
+```
+Maestro/
+├── pom.xml
+├── README.md
+├── start-dev.sh
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── com/
+│       │       └── example/
+│       │           └── maco/
+│       │               ├── LineEchoBotApplication.java
+│       │               ├── adapters/
+│       │               │   └── db/
+│       │               │       └── jpa/
+│       │               │           ├── LineUserMessage.java
+│       │               │           ├── LineUserMessageMapper.java
+│       │               │           └── LineUserMessageRepository.java
+│       │               └── linebot/
+│       │                   ├── LineBotController.java
+│       │                   ├── LineService.java
+│       │                   └── model/
+│       │                       └── LineMessageDto.java
+│       └── resources/
+│           └── application.properties
+└── target/
+    └── ...
+```
 
 ---
 
