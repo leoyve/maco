@@ -1,0 +1,33 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Others
+/node_modules/
+*.sh
