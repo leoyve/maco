@@ -14,6 +14,7 @@
 - [開始使用](#開始使用)
 - [資料庫設定](#資料庫設定)
 - [本機啟動](#本機啟動)
+- [NLPService (AI 語意分析模組)](#nlpservice-ai-語意分析模組)
 - [授權](#授權)
 
 ---
@@ -127,6 +128,62 @@
   ```bash
   export $(grep -v '^#' .env.dev | xargs) && mvn spring-boot:run
   ```
+
+---
+
+## 高併發非同步設計
+
+本專案 LINE Bot 訊息處理採用 Spring Boot @Async + CompletableFuture 非同步設計：
+- 每則訊息獨立執行，主流程不阻塞。
+- NLPService（/router, /process）API 呼叫皆在獨立執行緒完成。
+- 各 domain（如代辦事項、健康紀錄）邏輯也獨立非同步執行。
+- 可同時處理大量訊息，效能取決於主機資源與 ThreadPool 設定。
+
+範例流程：
+1. handleTextMessage() 以 @Async 非同步執行，訊息存入 DB 後，非同步呼叫 NLP /router 判斷 domain。
+2. 根據 domain 再分流至對應 Service（如 handleTodoAsync），同樣以 CompletableFuture 非同步呼叫 NLP /process。
+3. 各 Service 可在分析完成後主動回覆訊息或進行後續處理。
+
+> 若主機資源充足，可用 Spring 預設執行緒池；高併發場景建議自訂 ThreadPoolTaskExecutor 參數。
+
+---
+
+## NLPService (AI 語意分析模組)
+
+詳細說明請見 [NLPService/README.md](NLPService/README.md)
+
+本專案包含獨立的 Python NLPService，負責多領域語意分類與分析：
+
+- 採用 FastAPI 實作，支援高效 REST API。
+- 主要 API：
+  - `/router`：分類使用者文字，判斷主 domain（如 todo、health）。
+  - `/process`：根據 domain 進行細部語意分析。
+- 支援多領域（如代辦事項、健康紀錄），可彈性擴充。
+- 介接方式：Java 端以 HTTP 呼叫 `/router`、`/process`，取得 NLP 結果。
+- 具備健康檢查 API `/`，方便監控服務狀態。
+
+### NLPService 目錄結構
+```
+NLPService/
+├── main.py           # FastAPI 主程式
+├── models.py         # 請求/回應資料結構
+├── service.py        # 各領域分析邏輯
+├── prompts.py        # AI 提示詞
+├── requirements.txt  # Python 依賴
+├── Dockerfile        # 容器化設定
+└── README.md         # NLPService 說明
+```
+
+### 啟動方式
+1. 安裝 Python 依賴：
+   ```bash
+   cd NLPService
+   pip install -r requirements.txt
+   ```
+2. 啟動 FastAPI 服務：
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
 
 ---
 

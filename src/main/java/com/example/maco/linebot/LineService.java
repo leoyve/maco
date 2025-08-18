@@ -2,12 +2,16 @@ package com.example.maco.linebot;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.maco.linebot.model.LineMessageDto;
+import com.example.maco.linebot.model.RouterRequest;
+import com.example.maco.linebot.model.RouterResponse;
+import com.example.maco.linebot.util.NlpClient;
 import com.example.maco.adapters.db.jpa.LineUserMessageMapper;
 import com.example.maco.adapters.db.jpa.LineUserMessageRepository;
 import com.example.maco.adapters.db.jpa.LineUserMessage;
@@ -18,6 +22,9 @@ import com.linecorp.bot.messaging.model.PushMessageRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.example.maco.linebot.model.ProcessRequest;
+import com.example.maco.linebot.model.ProcessResponse;
 
 @Service
 public class LineService {
@@ -40,21 +47,48 @@ public class LineService {
 
     @Async
     @Transactional
-    public void handleTextMessage(LineMessageDto lineMessageDto) {
+    public CompletableFuture<Void> handleTextMessage(LineMessageDto lineMessageDto) {
         // 先將訊息存進DB
         LineUserMessage entity = LineUserMessageMapper.toEntity(lineMessageDto);
         lineUserMessageRepository.save(entity);
         lineUserMessageRepository.flush();
 
-        List<LineUserMessage> messages = lineUserMessageRepository.findByUserId(lineMessageDto.getUserId());
-        // 回覆訊息
-        StringBuilder sb = new StringBuilder();
-        for (LineUserMessage message : messages) {
-            sb.append(message.getMessage()).append(message.getReceiveTime()).append("\n");
-        }
+        // 呼叫 NLPService 判斷 domain (非同步)
+        CompletableFuture<RouterResponse> routerFuture = CompletableFuture.supplyAsync(() -> NlpClient
+                .callNlpApi("/router", new RouterRequest(lineMessageDto.getMessage()), RouterResponse.class));
 
-        log.info("Replying to user {} with messages: {}", lineMessageDto.getUserId(), sb.toString());
-        // pushMessage(entity.getUserId(), sb.toString());
+        return routerFuture.thenAccept(routerRes -> {
+            String domain = routerRes != null ? routerRes.getDomain() : "unknown";
+            log.info("NLPService 判斷 domain: {}", domain);
+            switch (domain) {
+                case "todo":
+                    handleTodoAsync(lineMessageDto, domain);
+                    break;
+                case "health":
+                    handleHealthAsync(lineMessageDto, domain);
+                    break;
+                default:
+                    log.info("未知 domain，僅儲存訊息");
+            }
+        });
+    }
+
+    // 各 domain 對應的 Service 處理方法 (非同步)
+    @Async
+    public CompletableFuture<Void> handleTodoAsync(LineMessageDto dto, String domain) {
+        log.info("處理代辦事項 domain: {}", domain);
+        CompletableFuture<ProcessResponse> processFuture = CompletableFuture.supplyAsync(() -> NlpClient
+                .callNlpApi("/process", new ProcessRequest(domain, dto.getMessage()), ProcessResponse.class));
+        return processFuture.thenAccept(processRes -> {
+            log.info("NLP /process response: {}", processRes != null ? processRes.getResult() : "null");
+        });
+    }
+
+    @Async
+    public CompletableFuture<Void> handleHealthAsync(LineMessageDto dto, String domain) {
+        log.info("處理健康 domain: {}", domain);
+        // 可依需求串接 /process 或其他服務
+        return CompletableFuture.completedFuture(null);
     }
 
     public void sendReply(String replyToken, String message) {
