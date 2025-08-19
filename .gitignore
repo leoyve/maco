@@ -31,3 +31,24 @@ Thumbs.db
 # Others
 /node_modules/
 *.sh
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+NLPService/.env
+NLPService/venv/
+NLPService/.mypy_cache/
+NLPService/.pytest_cache/
+NLPService/.ipynb_checkpoints/
+main copy.py
+
+# Docker
+*.pid
+*.db
+NLPService/.docker/
+
+# Editor swap files
+*.swp
+*.swo
