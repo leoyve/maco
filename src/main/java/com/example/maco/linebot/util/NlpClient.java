@@ -5,6 +5,9 @@ import org.springframework.http.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 public class NlpClient {
     private static final Logger log = LoggerFactory.getLogger(NlpClient.class);
@@ -19,6 +22,8 @@ public class NlpClient {
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(responseType)
+                    // 最小 retry：最多重試 1 次，短暫 backoff
+                    .retryWhen(Retry.backoff(1, Duration.ofMillis(300)))
                     .block();
             log.info("NLP {} response: {}", path, response);
             return response;
@@ -37,6 +42,8 @@ public class NlpClient {
                 .retrieve()
                 .bodyToMono(responseType)
                 .doOnNext(res -> log.info("NLP {} response: {}", path, res))
-                .doOnError(e -> log.error("NLP {} 呼叫失敗", path, e));
+                .doOnError(e -> log.error("NLP {} 呼叫失敗", path, e))
+                // 最小 retry：最多重試 1 次，短暫 backoff
+                .retryWhen(Retry.backoff(1, Duration.ofMillis(300)));
     }
 }

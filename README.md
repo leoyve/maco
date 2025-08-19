@@ -15,6 +15,7 @@
 - TodoMapper.toEntity() 支援 NLPService 回傳的 "yyyy-MM-dd HH:mm" 時間格式，避免 DateTimeParseException。
 - UserEntity、TodoEntity、LineMessageEntity 都已加入 JPA Auditing 註解，createdAt/updatedAt 欄位可自動填入時間戳。
 - 高併發流程、DTO/Model/Entity分層、物件映射、異常處理、日誌等皆已優化。
+- NlpClient 最小 retry 已加入：在同步與非同步呼叫路徑皆使用 WebClient 的 `retryWhen(Retry.backoff(1, 300ms))` 設定，短暫網路/暫時性錯誤時會重試一次並記錄日誌（檔案：`src/main/java/com/example/maco/linebot/util/NlpClient.java`）。
 
 ---
 
@@ -198,13 +199,28 @@ NLPService/
 
 ---
 
-## 專案結構
+## 代辦事項
+- 監控 NlpClient 重試次數與失敗率（建議：加入 metrics，觀察是否需要調整 retry 策略）。
+- 視流量需求評估是否導入 Resilience4j（retry + circuit breaker + bulkhead）。
+- 若使用非同步/ThreadPool，確認 MDC / traceId 傳遞（以便日誌追蹤）。
 
+
+---
+
+## 專案結構
 ```
 Maestro/
 ├── pom.xml
 ├── README.md
 ├── start-dev.sh
+├── NLPService/
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── models.py
+│   ├── prompts.py
+│   ├── requirements.txt
+│   ├── service.py
+│   └── README.md
 ├── src/
 │   └── main/
 │       ├── java/
@@ -212,17 +228,46 @@ Maestro/
 │       │       └── example/
 │       │           └── maco/
 │       │               ├── LineEchoBotApplication.java
-│       │               ├── adapters/
-│       │               │   └── db/
-│       │               │       └── jpa/
-│       │               │           ├── LineUserMessage.java
-│       │               │           ├── LineUserMessageMapper.java
-│       │               │           └── LineUserMessageRepository.java
-│       │               └── linebot/
-│       │                   ├── LineBotController.java
-│       │                   ├── LineService.java
-│       │                   └── model/
-│       │                       └── LineMessageDto.java
+│       │               ├── linebot/
+│       │               │   ├── LineBotController.java
+│       │               │   ├── LineService.java
+│       │               │   ├── model/
+│       │               │   │   ├── ProcessRequest.java
+│       │               │   │   ├── ProcessResponse.java
+│       │               │   │   ├── RouterRequest.java
+│       │               │   │   └── RouterResponse.java
+│       │               │   └── util/
+│       │               │       └── NlpClient.java
+│       │               ├── domain/
+│       │               │   ├── dto/
+│       │               │   │   ├── BaseResultDto.java
+│       │               │   │   ├── LineMessageDto.java
+│       │               │   │   └── TodoResultDto.java
+│       │               │   ├── model/
+│       │               │   │   ├── BaseResult.java
+│       │               │   │   ├── todo/
+│       │               │   │   │   └── TodoResult.java
+│       │               │   │   └── user/
+│       │               │   └── port/
+│       │               │       └── user/
+│       │               ├── infra/
+│       │               │   ├── jpa/
+│       │               │   │   ├── adapter/
+│       │               │   │   │   └── JpaTodoRepository.java
+│       │               │   │   ├── entity/
+│       │               │   │   │   ├── TodoEntity.java
+│       │               │   │   │   ├── UserEntity.java
+│       │               │   │   │   └── LineMessageEntity.java
+│       │               │   │   ├── mapper/
+│       │               │   │   │   └── TodoMapper.java
+│       │               │   │   └── repo/
+│       │               │   │       ├── TodoJpaRepo.java
+│       │               │   │       └── UserJpaRepo.java
+│       │               ├── todo/
+│       │               │   └── TodoService.java
+│       │               └── user/
+│       │                   ├── LineMessageService.java
+│       │                   └── UserService.java
 │       └── resources/
 │           └── application.properties
 └── target/

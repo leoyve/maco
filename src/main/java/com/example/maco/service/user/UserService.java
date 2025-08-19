@@ -1,4 +1,4 @@
-package com.example.maco.user;
+package com.example.maco.service.user;
 
 import org.springframework.stereotype.Service;
 

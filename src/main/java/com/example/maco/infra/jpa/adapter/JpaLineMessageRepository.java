@@ -2,10 +2,12 @@ package com.example.maco.infra.jpa.adapter;
 
 import java.util.List;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Repository;
 
 import com.example.maco.domain.model.user.LineMessage;
 import com.example.maco.domain.port.user.LineMessageRepository;
+import com.example.maco.infra.exception.InfraException;
 import com.example.maco.infra.jpa.mapper.LineMessageMapper;
 import com.example.maco.infra.jpa.repo.LineMessageJpaRepo;
 
@@ -19,14 +21,23 @@ public class JpaLineMessageRepository implements LineMessageRepository {
 
     @Override
     public List<LineMessage> findByUserToken(String userId) {
-        return repo.findByUserId(userId)
-                .stream()
-                .map(LineMessageMapper::toDomain)
-                .toList();
+        try {
+            return repo.findByUserId(userId)
+                    .stream()
+                    .map(LineMessageMapper::toDomain)
+                    .toList();
+        } catch (DataAccessException e) {
+            throw new InfraException("Failed to find line messages for user: " + userId, e);
+        }
     }
 
     @Override
     public void save(LineMessage message) {
-        repo.save(LineMessageMapper.toEntity(message));
+        try {
+            repo.save(LineMessageMapper.toEntity(message));
+        } catch (DataAccessException e) {
+            throw new InfraException(
+                    "Failed to save line message for user: " + (message != null ? message.getUserId() : "null"), e);
+        }
     }
 }
