@@ -1,38 +1,19 @@
-package com.example.maco.adapters.db.jpa;
+package com.example.maco.domain.dto;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "line_user_message")
-public class LineUserMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "user_id", nullable = false, length = 100)
+public class LineMessageDto {
     private String userId;
-
-    @Column(name = "message", columnDefinition = "TEXT")
     private String message;
-
-    @Column(name = "receive_time", nullable = false)
     private LocalDateTime receiveTime;
-
-    @Column(name = "type", nullable = false, length = 20)
     private String type;
-
-    @Column(name = "reply_token", length = 50)
     private String replyToken;
-
-    @Column(name = "message_id", length = 50)
     private String messageId;
 
-    // getter, setter, constructor
-    public LineUserMessage() {
+    public LineMessageDto() {
     }
 
-    public LineUserMessage(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
+    public LineMessageDto(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
             String messageId) {
         this.userId = userId;
         this.message = message;
@@ -40,10 +21,6 @@ public class LineUserMessage {
         this.type = type;
         this.replyToken = replyToken;
         this.messageId = messageId;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getUserId() {

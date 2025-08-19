@@ -4,6 +4,17 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
 [![LINE API](https://img.shields.io/badge/LINE%20API-Messaging-green.svg)](https://developers.line.biz/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
+
+---
+
+## 近期優化紀錄（2025/08/19）
+- 分層架構全面優化：Controller 層只用 DTO，Service 層只用 Model，Repository 層只用 Entity，物件映射流程完整，維護性高。
+- TODO 模組：已支援 NLPService 語意分析、DTO/Model/Entity分離、物件映射、JPA 儲存、createdAt/updatedAt 自動填入，新增代辦事項功能已完成。
+- HEALTH 模組：已預留分層架構與 API 串接範例，未來可快速擴充健康紀錄、查詢等功能。
+- TodoMapper.toEntity() 支援 NLPService 回傳的 "yyyy-MM-dd HH:mm" 時間格式，避免 DateTimeParseException。
+- UserEntity、TodoEntity、LineMessageEntity 都已加入 JPA Auditing 註解，createdAt/updatedAt 欄位可自動填入時間戳。
+- 高併發流程、DTO/Model/Entity分層、物件映射、異常處理、日誌等皆已優化。
 
 ---
 

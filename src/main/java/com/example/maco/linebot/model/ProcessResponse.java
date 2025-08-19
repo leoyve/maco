@@ -1,16 +1,15 @@
 package com.example.maco.linebot.model;
 
+import java.util.Map;
+
 public class ProcessResponse {
-    private String result;
+    private Map<String, Object> result;
 
-    public ProcessResponse() {
-    }
-
-    public String getResult() {
+    public Map<String, Object> getResult() {
         return result;
     }
 
-    public void setResult(String result) {
+    public void setResult(Map<String, Object> result) {
         this.result = result;
     }
 }

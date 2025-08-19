@@ -1,8 +1,8 @@
-package com.example.maco.linebot.model;
+package com.example.maco.domain.model.user;
 
 import java.time.LocalDateTime;
 
-public class LineMessageDto {
+public class LineMessage {
     private String userId;
     private String message;
     private LocalDateTime receiveTime;
@@ -10,10 +10,7 @@ public class LineMessageDto {
     private String replyToken;
     private String messageId;
 
-    public LineMessageDto() {
-    }
-
-    public LineMessageDto(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
+    public LineMessage(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
             String messageId) {
         this.userId = userId;
         this.message = message;
@@ -27,47 +24,48 @@ public class LineMessageDto {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
     public String getMessage() {
         return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public LocalDateTime getReceiveTime() {
         return receiveTime;
     }
 
-    public void setReceiveTime(LocalDateTime receiveTime) {
-        this.receiveTime = receiveTime;
-    }
-
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public String getReplyToken() {
         return replyToken;
     }
 
-    public void setReplyToken(String replyToken) {
-        this.replyToken = replyToken;
-    }
-
     public String getMessageId() {
         return messageId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setReceiveTime(LocalDateTime receiveTime) {
+        this.receiveTime = receiveTime;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setReplyToken(String replyToken) {
+        this.replyToken = replyToken;
     }
 
     public void setMessageId(String messageId) {
         this.messageId = messageId;
     }
+
 }

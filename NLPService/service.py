@@ -51,6 +51,6 @@ async def process_domain_specific_text(domain: str, text: str) -> dict:
         result = json.loads(cleaned_text)
         # 在最終結果中，再次把 domain 加上，方便後端處理
         result["domain"] = domain
-        return result
+        return {"result": result}
     except Exception as e:
         return {"error": f"Processor failed for domain '{domain}': {str(e)}", "raw_response": response.text if 'response' in locals() else None}

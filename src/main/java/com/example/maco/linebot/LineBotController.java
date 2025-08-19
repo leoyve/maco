@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.maco.linebot.model.LineMessageDto;
+import com.example.maco.domain.dto.LineMessageDto;
 import com.linecorp.bot.spring.boot.handler.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.handler.annotation.LineMessageHandler;
 import com.linecorp.bot.webhook.model.ImageMessageContent;

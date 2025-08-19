@@ -24,6 +24,9 @@ JSON: {{"domain": "health"}}
 Text: "今天天氣真好"
 JSON: {{"domain": "unrelated"}}
 ---
+Text: "後天要去泌尿科看醫生"
+JSON: {{"domain": "todo"}}
+---
 # TASK:
 Text: "{text}"
 JSON:
@@ -54,6 +57,9 @@ JSON: {{ "intent": "addTodo", "entities": {{ "task": "打羽球", "time": {{"tim
 ---
 Text: "這星期有什麼事情"
 JSON: {{ "intent": "queryTodo", "entities": {{"task": null, time": {{"startDate": "2025-08-18 00:00", "endDate": "2025-08-24 23:59"}}, "location": null, "status": null }}, "is_clear": true, "recommendation": null}}
+---
+Text: "要開會"
+JSON: {{ "intent": "addTodo", "entities": {{"task": null, time": {{"timestamp": null}}, "location": null, "status": null }}, "is_clear": false, "recommendation": "請提供更多細節，例如時間或地點！" }}
 ---
 # TASK:
 Text: "{text}"
