@@ -30,31 +30,19 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> findGroupMembersByToken(String token, boolean includeSelf) {
-        try {
-            var list = includeSelf
-                    ? repo.findGroupMembersByToken(token)
-                    : repo.findOtherGroupMembersByToken(token);
-            return list.stream().map(UserMapper::toModel).toList();
-        } catch (DataAccessException e) {
-            throw new InfraException("Failed to find group members for token: " + token, e);
-        }
-    }
-
-    @Override
     public void save(User user) {
         try {
             // Spring Data JPA 的 save() = saveOrUpdate
             // 這裡決定「新建或更新」的欄位行為
-            var entity = repo.findById(user.getToken())
+            var entity = repo.findById(user.getUserToken())
                     .orElseGet(() -> UserMapper.toEntity(user)); // INSERT 走這
-            if (entity.getToken() != null) {
+            if (entity.getUserToken() != null) {
                 // UPDATE：用 Model 覆蓋到已存在的 Entity
                 UserMapper.copyToEntity(user, entity);
             }
             repo.save(entity);
         } catch (DataAccessException e) {
-            throw new InfraException("Failed to save user: " + (user != null ? user.getToken() : "null"), e);
+            throw new InfraException("Failed to save user: " + (user != null ? user.getUserToken() : "null"), e);
         }
     }
 }

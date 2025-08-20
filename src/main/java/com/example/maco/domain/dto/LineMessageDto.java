@@ -3,7 +3,7 @@ package com.example.maco.domain.dto;
 import java.time.LocalDateTime;
 
 public class LineMessageDto {
-    private String userId;
+    private String userToken;
     private String message;
     private LocalDateTime receiveTime;
     private String type;
@@ -13,9 +13,9 @@ public class LineMessageDto {
     public LineMessageDto() {
     }
 
-    public LineMessageDto(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
+    public LineMessageDto(String userToken, String message, LocalDateTime receiveTime, String type, String replyToken,
             String messageId) {
-        this.userId = userId;
+        this.userToken = userToken;
         this.message = message;
         this.receiveTime = receiveTime;
         this.type = type;
@@ -23,12 +23,12 @@ public class LineMessageDto {
         this.messageId = messageId;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserToken() {
+        return userToken;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserToken(String userId) {
+        this.userToken = userId;
     }
 
     public String getMessage() {

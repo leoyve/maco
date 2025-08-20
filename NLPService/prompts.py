@@ -27,6 +27,9 @@ JSON: {{"domain": "unrelated"}}
 Text: "後天要去泌尿科看醫生"
 JSON: {{"domain": "todo"}}
 ---
+Text: "買貓砂"
+JSON: {{"domain": "todo"}}
+---
 # TASK:
 Text: "{text}"
 JSON:
@@ -49,8 +52,8 @@ Respond ONLY with a valid JSON object.
 Text: "提醒我明天下午三點跟 David 開會"
 JSON: {{ "intent": "addTodo", "entities": {{ "task": "跟 David 開會", "time": {{"timestamp": "2025-08-19 15:00"}}, "location": null, "status": "TODO"  }}, "is_clear": true, "recommendation": null }}
 ---
-Text: "把開會那件事標示為完成"
-JSON: {{ "intent": "modifyTodoStatus", "target_task": {{"task": "開會"}}, "new_status": "DONE", "is_clear": true, "recommendation": null }}
+Text: "買貓砂"
+JSON: {{ "intent": "addTodo", "entities": {{ "task": "買貓砂", "time": {{"timestamp": null}}, "location": null, "status": "TODO"  }}, "is_clear": true, "recommendation": null }}
 ---
 Text: "下星期一要去林口體育場打羽球"
 JSON: {{ "intent": "addTodo", "entities": {{ "task": "打羽球", "time": {{"timestamp": "2025-08-25 00:00"}}, "location": 林口體育場, "status": "TODO"  }}, "is_clear": true, "recommendation": null }}

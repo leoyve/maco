@@ -3,26 +3,26 @@ package com.example.maco.domain.model.user;
 import java.time.Instant;
 
 public class User {
-    private final String token;
+    private final String userToken;
     private Long groupId;
     private Instant lastUseTime;
 
-    public User(String token, Long groupId, Instant lastUseTime) {
-        this.token = token;
+    public User(String userToken, Long groupId, Instant lastUseTime) {
+        this.userToken = userToken;
         this.groupId = groupId;
         this.lastUseTime = lastUseTime;
     }
 
-    public static User newUser(String token) {
-        return new User(token, null, Instant.now());
+    public static User newUser(String userToken) {
+        return new User(userToken, null, Instant.now());
     }
 
     public void touch() {
         this.lastUseTime = Instant.now();
     }
 
-    public String getToken() {
-        return token;
+    public String getUserToken() {
+        return userToken;
     }
 
     public Long getGroupId() {

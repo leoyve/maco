@@ -3,16 +3,16 @@ package com.example.maco.domain.model.user;
 import java.time.LocalDateTime;
 
 public class LineMessage {
-    private String userId;
+    private String userToken;
     private String message;
     private LocalDateTime receiveTime;
     private String type;
     private String replyToken;
     private String messageId;
 
-    public LineMessage(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
+    public LineMessage(String userToken, String message, LocalDateTime receiveTime, String type, String replyToken,
             String messageId) {
-        this.userId = userId;
+        this.userToken = userToken;
         this.message = message;
         this.receiveTime = receiveTime;
         this.type = type;
@@ -20,8 +20,8 @@ public class LineMessage {
         this.messageId = messageId;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserToken() {
+        return userToken;
     }
 
     public String getMessage() {
@@ -44,8 +44,8 @@ public class LineMessage {
         return messageId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserToken(String userId) {
+        this.userToken = userId;
     }
 
     public void setMessage(String message) {

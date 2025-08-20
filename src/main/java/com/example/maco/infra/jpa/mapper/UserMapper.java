@@ -12,12 +12,12 @@ public final class UserMapper {
         if (e == null) {
             return null;
         }
-        return new User(e.getToken(), e.getGroupId(), e.getLastUseTime());
+        return new User(e.getUserToken(), e.getGroupId(), e.getLastUseTime());
     }
 
     public static UserEntity toEntity(User m) {
         var e = new UserEntity();
-        e.setToken(m.getToken());
+        e.setUserToken(m.getUserToken());
         e.setGroupId(m.getGroupId());
         e.setLastUseTime(m.getLastUseTime());
         return e;

@@ -58,7 +58,7 @@ public class LineService {
     public CompletableFuture<Void> handleTextMessage(LineMessageDto lineMessageDto) {
         lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
         LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
-        userService.upsertUser(lineMessage.getUserId());
+        userService.upsertUser(lineMessage.getUserToken());
 
         return NlpClient
                 .callNlpApiAsync("/router", new RouterRequest(lineMessage.getMessage()), RouterResponse.class)
@@ -66,7 +66,7 @@ public class LineService {
                 .toFuture()
                 .thenAccept(routerRes -> {
                     String domain = routerRes != null ? routerRes.getDomain() : "unknown";
-                    log.info("NLPService 判斷 domain: {}, userId: {}, messageId: {}", domain, lineMessage.getUserId(),
+                    log.info("NLPService 判斷 domain: {}, userId: {}, messageId: {}", domain, lineMessage.getUserToken(),
                             lineMessage.getMessageId()); // 7. 日誌優化
                     switch (domain) {
                         case "todo":
@@ -84,13 +84,13 @@ public class LineService {
                                     }); // 1. 異常處理
                             break;
                         default:
-                            log.info("未知 domain，僅儲存訊息, userId: {}, messageId: {}", lineMessage.getUserId(),
+                            log.info("未知 domain，僅儲存訊息, userId: {}, messageId: {}", lineMessage.getUserToken(),
                                     lineMessage.getMessageId()); // 7. 日誌優化
                             sendReply(lineMessage.getReplyToken(), "未知的請求，請嘗試：\n1. 新增代辦事項\n2. 新增體重\n");
                     }
                 })
                 .exceptionally(e -> {
-                    log.error("NLP /router error, userId: {}, messageId: {}", lineMessage.getUserId(),
+                    log.error("NLP /router error, userId: {}, messageId: {}", lineMessage.getUserToken(),
                             lineMessage.getMessageId(), e);
                     sendReply(lineMessage.getReplyToken(), "系統出現些許錯誤，請稍後再試");
                     return null;
@@ -100,23 +100,24 @@ public class LineService {
     // 各 domain 對應的 Service 處理方法 (非同步)
     @Async("taskExecutor")
     public CompletableFuture<Void> handleTodoAsync(LineMessage model, String domain) {
-        log.info("處理代辦事項 domain: {}, userId: {}, messageId: {}", domain, model.getUserId(), model.getMessageId());
+        log.info("處理代辦事項 domain: {}, userId: {}, messageId: {}", domain, model.getUserToken(), model.getMessageId());
         return NlpClient
                 .callNlpApiAsync("/process", new ProcessRequest(domain, model.getMessage()), ProcessResponse.class)
                 .timeout(Duration.ofSeconds(20))
                 .toFuture()
                 .thenAccept(processRes -> {
                     log.info("NLP /process response: {}, userId: {}, messageId: {}",
-                            processRes != null ? processRes.getResult() : "null", model.getUserId(),
+                            processRes != null ? processRes.getResult() : "null", model.getUserToken(),
                             model.getMessageId());
                     // 6. 處理 NLP 回傳結果
                     if (processRes != null && processRes.getResult() != null) {
                         ObjectMapper mapper = new ObjectMapper();
                         TodoResultDto todoResultDto = mapper.convertValue(processRes.getResult(), TodoResultDto.class);
                         TodoResult todoResult = TodoMapper.toDomain(todoResultDto);
+                        todoResult.setUserToken(model.getUserToken());
 
                         if (todoResult == null) {
-                            log.warn("TodoResultDto is null, userId: {}, messageId: {}", model.getUserId(),
+                            log.warn("TodoResultDto is null, userId: {}, messageId: {}", model.getUserToken(),
                                     model.getMessageId());
                             sendReply(model.getReplyToken(), "[代辦事項] 無法處理您的請求，請稍後再試");
                             return;
@@ -126,8 +127,6 @@ public class LineService {
                             return;
                         }
 
-                        // TODO 增加ＤＢ層邏輯
-
                         // 依 intent 組合更友善訊息
                         String reply;
                         if ("addTodo".equals(todoResult.getIntent())) {
@@ -135,9 +134,11 @@ public class LineService {
                                 todoService.insertTodo(todoResult);
                                 reply = todoResult.toUserMessageForAdd();
                                 sendReply(model.getReplyToken(), reply);
-                                log.info("新增代辦成功, userId: {}, messageId: {}", model.getUserId(), model.getMessageId());
+                                log.info("新增代辦成功, userId: {}, messageId: {}", model.getUserToken(),
+                                        model.getMessageId());
                             } catch (Exception ex) {
-                                log.error("新增代辦失敗, userId: {}, messageId: {}", model.getUserId(), model.getMessageId(),
+                                log.error("新增代辦失敗, userId: {}, messageId: {}", model.getUserToken(),
+                                        model.getMessageId(),
                                         ex);
                                 reply = "新增代辦失敗，請稍後再試";
                                 sendReply(model.getReplyToken(), reply);
@@ -158,12 +159,13 @@ public class LineService {
                             sendReply(model.getReplyToken(), reply);
                         }
                     } else {
-                        log.warn("ProcessResponse result is null, userId: {}, messageId: {}", model.getUserId(),
+                        log.warn("ProcessResponse result is null, userId: {}, messageId: {}", model.getUserToken(),
                                 model.getMessageId());
                         sendReply(model.getReplyToken(), "[代辦事項] 無法處理您的請求，請稍後再試");
                     }
                 }).exceptionally(e -> {
-                    log.error("NLP /process error, userId: {}, messageId: {}", model.getUserId(), model.getMessageId(),
+                    log.error("NLP /process error, userId: {}, messageId: {}", model.getUserToken(),
+                            model.getMessageId(),
                             e);
                     sendReply(model.getReplyToken(), "[代辦事項] 系統出現些許錯誤，請稍後再試");
                     return null;
@@ -172,7 +174,7 @@ public class LineService {
 
     @Async("taskExecutor")
     public CompletableFuture<Void> handleHealthAsync(LineMessage model, String domain) {
-        log.info("處理健康 domain: {}, userId: {}, messageId: {}", domain, model.getUserId(), model.getMessageId());
+        log.info("處理健康 domain: {}, userId: {}, messageId: {}", domain, model.getUserToken(), model.getMessageId());
         return NlpClient
                 .callNlpApiAsync("/process", new ProcessRequest(domain, model.getMessage()), ProcessResponse.class)
                 .timeout(Duration.ofSeconds(20))

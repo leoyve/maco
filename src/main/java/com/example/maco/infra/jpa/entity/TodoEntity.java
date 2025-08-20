@@ -20,13 +20,16 @@ import jakarta.persistence.EntityListeners;
 @Getter
 @Setter
 @Entity
-@Table(name = "todo")
+@Table(name = "todos")
 @EntityListeners(AuditingEntityListener.class)
 public class TodoEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_token", nullable = false, length = 100)
+    private String userToken;
 
     @Column(name = "task", nullable = false, length = 200)
     private String task;

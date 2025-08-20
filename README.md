@@ -52,6 +52,9 @@
 - pom.xml 增加 HikariCP、Spring Data JPA、PostgreSQL JDBC driver 依賴。
 - application.properties 增加 HikariCP 連線池與 SQL 日誌設定。
 - README.md 增加 DB 設計、Spring Boot 連接 PostgreSQL 教學。
+- 新增 Flyway 版本化 migration 支援：將 SQL migration 檔放在 `src/main/resources/db/migration/`（例如 `V1__init_schema.sql`、`V2__...sql`、`V3__...sql`）。已在 `pom.xml` 加入 `flyway-core` 與 `flyway-database-postgresql` 依賴，啟動時 Spring Boot 會自動套用未執行的版本。
+  - 注意事項：版本號需唯一（不可有兩個相同 `V2__...`），已套用的 migration 不要直接修改，要新增新的版本檔（例如 `V4__...sql`）。若需要可重覆執行的 migration，使用 repeatable migration（`R__description.sql`）。如需接受先前順序之外的版本，可設定 `spring.flyway.out-of-order=true`（慎用）。
+  - 驗證：啟動後檢查資料表 `flyway_schema_history` 或查看啟動日誌確認哪些 migration 已套用。
 
 ---
 
@@ -138,6 +141,15 @@
   logging.level.org.hibernate.SQL=DEBUG
   logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
   ```
+- Flyway migration：
+  - 將 SQL migration 檔放在 `src/main/resources/db/migration/`（例如 `V1__init_schema.sql`、`V2__...sql`、`V3__...sql`）。
+  - 已在 `pom.xml` 加入 `flyway-core` 與 `flyway-database-postgresql` 依賴，啟動時 Spring Boot 會自動套用未執行的版本。
+  - 注意事項：
+    - 版本號需唯一（不可有兩個相同 `V2__...`）。
+    - 已套用的 migration 不要直接修改，要新增新的版本檔（例如 `V4__...sql`）。
+    - 若需要可重覆執行的 migration，使用 repeatable migration（`R__description.sql`）。
+    - 如需接受先前順序之外的版本，可設定 `spring.flyway.out-of-order=true`（慎用）。
+  - 驗證：啟動後檢查資料表 `flyway_schema_history` 或查看啟動日誌確認哪些 migration 已套用。
 - 建議使用 Spring Data JPA 存取資料。
 
 ---

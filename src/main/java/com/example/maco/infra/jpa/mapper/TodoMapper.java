@@ -27,6 +27,7 @@ public final class TodoMapper {
             entity.setStatus(TodoEntity.Status.valueOf(todoResult.getEntities().getStatus()));
         }
         entity.setOriginalString(todoResult.toString());
+        entity.setUserToken(todoResult.getUserToken());
         return entity;
     }
 
@@ -44,6 +45,7 @@ public final class TodoMapper {
             entities.setTime(time);
         }
         TodoResult result = new TodoResult();
+        result.setUserToken(e.getUserToken());
         result.setId(e.getId());
         result.setEntities(entities);
         result.setIntent(null);
@@ -72,6 +74,7 @@ public final class TodoMapper {
             entities.setStatus(dto.getEntities().getStatus());
         }
         TodoResult result = new TodoResult();
+        result.setUserToken(dto.getUserToken());
         result.setIntent(dto.getIntent());
         result.setEntities(entities);
         result.setClear(dto.isClear());

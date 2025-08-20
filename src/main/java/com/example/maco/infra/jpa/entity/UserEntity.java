@@ -21,8 +21,8 @@ import lombok.Setter;
 public class UserEntity {
 
     @Id
-    @Column(name = "token", nullable = false, length = 100)
-    private String token;
+    @Column(name = "user_token", nullable = false, length = 100)
+    private String userToken;
 
     @Column(name = "group_id")
     private Long groupId;

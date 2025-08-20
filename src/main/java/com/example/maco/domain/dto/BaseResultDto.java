@@ -23,6 +23,7 @@ import lombok.Data;
 
 @Data
 public class BaseResultDto {
+    private String userToken;
     private String intent;
     private String domain;
     @JsonProperty("is_clear")

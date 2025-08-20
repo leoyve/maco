@@ -10,7 +10,7 @@ public class LineMessageMapper {
             return null;
         }
         LineMessageEntity entity = new LineMessageEntity();
-        entity.setUserId(message.getUserId());
+        entity.setUserToken(message.getUserToken());
         entity.setMessage(message.getMessage());
         entity.setReceiveTime(message.getReceiveTime());
         entity.setType(message.getType());
@@ -23,7 +23,7 @@ public class LineMessageMapper {
         if (entity == null) {
             return null;
         }
-        return new LineMessage(entity.getUserId(), entity.getMessage(), entity.getReceiveTime(),
+        return new LineMessage(entity.getUserToken(), entity.getMessage(), entity.getReceiveTime(),
                 entity.getType(), entity.getReplyToken(), entity.getMessageId());
     }
 
@@ -31,7 +31,7 @@ public class LineMessageMapper {
         if (dto == null)
             return null;
         return new LineMessage(
-                dto.getUserId(),
+                dto.getUserToken(),
                 dto.getMessage(),
                 dto.getReceiveTime(),
                 dto.getType(),

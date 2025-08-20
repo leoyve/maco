@@ -20,24 +20,12 @@ public class JpaLineMessageRepository implements LineMessageRepository {
     private final LineMessageJpaRepo repo;
 
     @Override
-    public List<LineMessage> findByUserToken(String userId) {
-        try {
-            return repo.findByUserId(userId)
-                    .stream()
-                    .map(LineMessageMapper::toDomain)
-                    .toList();
-        } catch (DataAccessException e) {
-            throw new InfraException("Failed to find line messages for user: " + userId, e);
-        }
-    }
-
-    @Override
     public void save(LineMessage message) {
         try {
             repo.save(LineMessageMapper.toEntity(message));
         } catch (DataAccessException e) {
             throw new InfraException(
-                    "Failed to save line message for user: " + (message != null ? message.getUserId() : "null"), e);
+                    "Failed to save line message for user: " + (message != null ? message.getUserToken() : "null"), e);
         }
     }
 }

@@ -8,14 +8,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "line_user_message")
+@Table(name = "line_user_messages")
 public class LineMessageEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, length = 100)
-    private String userId;
+    @Column(name = "user_token", nullable = false, length = 100)
+    private String userToken;
 
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
@@ -36,9 +36,10 @@ public class LineMessageEntity {
         // Default constructor for JPA
     }
 
-    public LineMessageEntity(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
+    public LineMessageEntity(String userToken, String message, LocalDateTime receiveTime, String type,
+            String replyToken,
             String messageId) {
-        this.userId = userId;
+        this.userToken = userToken;
         this.message = message;
         this.receiveTime = receiveTime;
         this.type = type;
