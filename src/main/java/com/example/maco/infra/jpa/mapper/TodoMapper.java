@@ -1,13 +1,11 @@
 package com.example.maco.infra.jpa.mapper;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 import com.example.maco.domain.dto.TodoResultDto;
 import com.example.maco.domain.model.todo.TodoResult;
 import com.example.maco.infra.jpa.entity.TodoEntity;
+import com.example.maco.infra.jpa.util.DateTimeUtils;
 
 public final class TodoMapper {
     public static TodoEntity toEntity(TodoResult todoResult) {
@@ -20,19 +18,9 @@ public final class TodoMapper {
             if (todoResult.getEntities().getTime() != null) {
                 String ts = todoResult.getEntities().getTime().getTimestamp();
                 if (ts != null && !ts.isEmpty()) {
-                    try {
-                        // 支援 "yyyy-MM-dd HH:mm" 格式
-                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-                        LocalDateTime ldt = LocalDateTime.parse(ts, dtf);
-                        entity.setTodoTime(ldt.atZone(ZoneId.systemDefault()).toInstant());
-                    } catch (Exception e) {
-                        // 若 parse 失敗，嘗試 ISO 格式
-                        try {
-                            entity.setTodoTime(Instant.parse(ts));
-                        } catch (Exception ex) {
-                            entity.setTodoTime(null); // 解析失敗
-                        }
-                    }
+                    // 使用共用工具解析時間字串
+                    Instant parsed = DateTimeUtils.parseToInstant(ts);
+                    entity.setTodoTime(parsed);
                 }
             }
             entity.setLocation(todoResult.getEntities().getLocation());
@@ -42,14 +30,28 @@ public final class TodoMapper {
         return entity;
     }
 
-    // public static TodoResult toDomain(LineMessageEntity entity) {
-    // if (entity == null) {
-    // return null;
-    // }
-    // return new LineMessage(entity.getUserId(), entity.getMessage(),
-    // entity.getReceiveTime(),
-    // entity.getType(), entity.getReplyToken(), entity.getMessageId());
-    // }
+    public static TodoResult toDomain(TodoEntity e) {
+        if (e == null)
+            return null;
+
+        TodoResult.TodoEntities entities = new TodoResult.TodoEntities();
+        entities.setTask(e.getTask());
+        entities.setLocation(e.getLocation());
+        entities.setStatus(e.getStatus() != null ? e.getStatus().name() : null);
+        if (e.getTodoTime() != null) {
+            TodoResult.TodoEntities.TodoTime time = new TodoResult.TodoEntities.TodoTime();
+            time.setTimestamp(e.getTodoTime().toString());
+            entities.setTime(time);
+        }
+        TodoResult result = new TodoResult();
+        result.setId(e.getId());
+        result.setEntities(entities);
+        result.setIntent(null);
+        result.setDomain(null);
+        result.setClear(true);
+        result.setRecommendation(null);
+        return result;
+    }
 
     public static TodoResult toDomain(TodoResultDto dto) {
         if (dto == null)

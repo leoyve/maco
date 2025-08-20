@@ -1,10 +1,14 @@
 package com.example.maco.service.todo;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.maco.domain.model.todo.TodoResult;
 import com.example.maco.domain.port.user.TodoRepository;
 import com.example.maco.infra.exception.DomainException;
+import com.example.maco.infra.jpa.util.DateTimeUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,4 +44,14 @@ public class TodoService {
         // 通過驗證後交由 repo 保存（adapter 會做轉換與 infra 包裝）
         todoRepo.save(model); // ← 傳 Model，轉換發生在 Adapter
     }
+
+    public List<TodoResult> getTodoSummary(String startDate, String endDate) {
+        Instant start = DateTimeUtils.parseToInstant(startDate);
+        Instant end = DateTimeUtils.parseToInstant(endDate);
+        if (start.isAfter(end)) {
+            throw new DomainException("Start date must be before end date");
+        }
+        return todoRepo.findTodoByTimeRange(start, end);
+    }
+
 }

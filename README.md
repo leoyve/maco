@@ -1,4 +1,4 @@
-# Spring Boot LINE Echo Bot
+# Spring Boot LINE AI Manager Bot
 
 [![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://www.java.com)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -8,14 +8,25 @@
 
 ---
 
-## 近期優化紀錄（2025/08/19）
-- 分層架構全面優化：Controller 層只用 DTO，Service 層只用 Model，Repository 層只用 Entity，物件映射流程完整，維護性高。
-- TODO 模組：已支援 NLPService 語意分析、DTO/Model/Entity分離、物件映射、JPA 儲存、createdAt/updatedAt 自動填入，新增代辦事項功能已完成。
-- HEALTH 模組：已預留分層架構與 API 串接範例，未來可快速擴充健康紀錄、查詢等功能。
-- TodoMapper.toEntity() 支援 NLPService 回傳的 "yyyy-MM-dd HH:mm" 時間格式，避免 DateTimeParseException。
-- UserEntity、TodoEntity、LineMessageEntity 都已加入 JPA Auditing 註解，createdAt/updatedAt 欄位可自動填入時間戳。
-- 高併發流程、DTO/Model/Entity分層、物件映射、異常處理、日誌等皆已優化。
-- NlpClient 最小 retry 已加入：在同步與非同步呼叫路徑皆使用 WebClient 的 `retryWhen(Retry.backoff(1, 300ms))` 設定，短暫網路/暫時性錯誤時會重試一次並記錄日誌（檔案：`src/main/java/com/example/maco/linebot/util/NlpClient.java`）。
+## 功能概覽
+
+- LINE Bot Webhook：接收並回覆使用者訊息，支援簽章驗證（LINE Messaging API）。
+- 代辦事項（TODO）管理：支援新增、查詢、完成、刪除，使用 NLPService 解析使用者語意以判別動作與欄位。
+- Flex 訊息支持：可從 classpath 範本或動態產生 Flex JSON（LineFlexMessageBuilder），並能容錯包裝 bubble/contents 片段後發送。
+- 時間處理集中化：DateTimeUtils 提供統一的時間解析/格式化（支援 yyyy-MM-dd HH:mm 與 ISO-8601），供 Mapper/Service 共用。
+- 時間範圍查詢：JPA derived query 支援依狀態與時間區間查詢（Repository + Jpa adapter 已實作）。
+- 資料持久化：PostgreSQL + Spring Data JPA，Entity 支援 JPA Auditing（createdAt/updatedAt）。
+- 非同步與高併發設計：使用 @Async + CompletableFuture，NLP 與 domain 處理可非同步執行以提升吞吐量。
+- NLPService（外部 Python FastAPI）：提供 /router 與 /process 供語意分類與欄位解析，Java 端透過 HTTP 整合。
+- 錯誤處理與日誌：SLF4J 日誌、Flex 反序列化容錯（失敗時回退為文字回覆）、以及多處日誌紀錄以利除錯。
+- 開發/部署工具：包含 start-dev.sh、ngrok 支援與可選的 Docker 化 NLPService。
+
+## 注意事項：按鈕互動、Flex 與埠設定
+- 按鈕交互限制：目前 UI 上的按鈕支援「完成」與「刪除」，暫時不支援直接在卡片內修改代辦（避免修改流程與欄位衝突）。若使用者要修改事項，請先點選刪除再重新新增。
+- Postback data 欄位：Line 的按鈕會以 postback data 傳回參數，本專案使用的約定為 `action`（動作）與 `todo_id`（代辦資料唯一 id），範例： `action=complete_todo&todo_id=42`。
+- Flex 範本與動態產生：Flex 範本檔案位於 `src/main/resources/flex/todo_list_template.json`，實作中以 `LineFlexMessageBuilder` 將 `List<TodoResult>` 動態注入範本內容產生最終 JSON，再交由 `LineService` 發送。若要調整樣式，請編輯範本檔或調整 `LineFlexMessageBuilder#createTodoItemBox` 的輸出。
+- Flex JSON 傳輸容錯：LineService 可接收完整的 `type:flex` 結構或僅包含 `contents`（如 single bubble）的片段；系統會自動將片段包成完整的 `FlexMessage` 後發送，若解析失敗會回退為文字回覆。
+- 變更應用埠：若預設 8080 被佔用，可臨時以啟動參數改埠（`--server.port=8081`），或在 `src/main/resources/application.properties` 新增 `server.port=8081` 做為預設。
 
 ---
 

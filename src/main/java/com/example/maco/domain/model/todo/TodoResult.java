@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import com.example.maco.domain.model.BaseResult;
+import com.example.maco.infra.jpa.util.DateTimeUtils;
 
 @Getter
 @Setter
@@ -13,6 +14,7 @@ import com.example.maco.domain.model.BaseResult;
 @AllArgsConstructor
 public class TodoResult extends BaseResult {
 
+    private Long id;
     private TodoEntities entities;
 
     @Override
@@ -24,6 +26,40 @@ public class TodoResult extends BaseResult {
                 ", isClear=" + isClear() +
                 ", recommendation='" + getRecommendation() + '\'' +
                 '}';
+    }
+
+    // --- domain helper methods for user-facing text ---
+    public String getSanitizedTask() {
+        if (entities == null || entities.getTask() == null)
+            return "(未提供內容)";
+        return entities.getTask().trim().replaceAll("[\\r\\n]+", " ");
+    }
+
+    public String getTimeSummary() {
+        if (entities == null || entities.getTime() == null)
+            return "";
+        TodoEntities.TodoTime t = entities.getTime();
+        if (t == null)
+            return "";
+        String ts = t.getTimestamp();
+        if (ts != null && !ts.isBlank()) {
+            return "（" + DateTimeUtils.formatInstantToLocal(ts) + "）";
+        }
+        return "";
+    }
+
+    // 合併 sanitize 與 summary 為單一方法
+    public String getLocationSummary() {
+        if (entities == null || entities.getLocation() == null)
+            return "";
+        String loc = entities.getLocation().trim().replaceAll("[\\r\\n]+", " ");
+        if (loc.isBlank())
+            return "";
+        return "（地點：" + loc + "）";
+    }
+
+    public String toUserMessageForAdd() {
+        return "已新增代辦：「" + getSanitizedTask() + "」" + getTimeSummary() + getLocationSummary();
     }
 
     @Getter

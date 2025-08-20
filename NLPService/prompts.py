@@ -61,6 +61,15 @@ JSON: {{ "intent": "queryTodo", "entities": {{"task": null, time": {{"startDate"
 Text: "要開會"
 JSON: {{ "intent": "addTodo", "entities": {{"task": null, time": {{"timestamp": null}}, "location": null, "status": null }}, "is_clear": false, "recommendation": "請提供更多細節，例如時間或地點！" }}
 ---
+Text: "還有什麼事"
+JSON: {{ "intent": "queryTodo", "entities": {{"task": null, time": {{"startDate": "2025-08-18 00:00", "endDate": "2099-12-31 23:59"}}, "location": null, "status": null }}, "is_clear": true, "recommendation": null}}
+---
+Text: "將來/未來還有什麼事"
+JSON: {{ "intent": "queryTodo", "entities": {{"task": null, time": {{"startDate": "2025-08-18 00:00", "endDate": "2099-12-31 23:59"}}, "location": null, "status": null }}, "is_clear": true, "recommendation": null}}
+---
+Text: "明天有什麼事"
+JSON: {{ "intent": "queryTodo", "entities": {{"task": null, time": {{"startDate": "2025-08-18 00:00", "endDate": "2025-08-18 23:59"}}, "location": null, "status": null }}, "is_clear": true, "recommendation": null}}
+---
 # TASK:
 Text: "{text}"
 JSON:
