@@ -19,7 +19,7 @@ public class TodoService {
     private final TodoRepository todoRepo;
 
     @Transactional
-    public void insertTodo(TodoResult model) {
+    public void insertTodo(String userToken, TodoResult model) {
         // 基本參數驗證
         if (model == null) {
             throw new DomainException("TodoResult must not be null");
@@ -42,16 +42,16 @@ public class TodoService {
             throw new DomainException("Status must be TODO");
         }
         // 通過驗證後交由 repo 保存（adapter 會做轉換與 infra 包裝）
-        todoRepo.save(model); // ← 傳 Model，轉換發生在 Adapter
+        todoRepo.save(userToken, model); // ← 傳 Model，轉換發生在 Adapter
     }
 
-    public List<TodoResult> getTodoSummary(String startDate, String endDate) {
+    public List<TodoResult> getTodoSummary(String userToken, String startDate, String endDate) {
         Instant start = DateTimeUtils.parseToInstant(startDate);
         Instant end = DateTimeUtils.parseToInstant(endDate);
         if (start.isAfter(end)) {
             throw new DomainException("Start date must be before end date");
         }
-        return todoRepo.findTodoByTimeRange(start, end);
+        return todoRepo.findTodoByTimeRange(userToken, start, end);
     }
 
 }

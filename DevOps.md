@@ -89,13 +89,59 @@ docker push <account>.dkr.ecr.ap-northeast-1.amazonaws.com/maestro-java-backend:
 
 注意替換 `<account>` 與 region、repo 名稱為你的實際值。
 
-## 6. 建議與安全最佳實務
-- 不要使用 root 帳號做日常操作；程式應使用 IAM Role（若在 EC2/ECS/Lambda）或最小權限的 IAM 使用者。  
-- 不要把金鑰寫進程式碼或公開儲存庫；使用 Secrets Manager / SSM / CI Secrets。  
-- 若金鑰外洩，立即停用或刪除該 Access Key。  
-- 在生產環境採用 IAM Role 與臨時憑證（例如透過 STS）以降低風險。
+## 6. VPC 與 NAT（對外連線）
+當你的服務部署在私有子網（private subnet）時，若需要對外存取（例如拉取套件、呼叫外部 API、或推/拉 ECR 映像），就需要透過 NAT 或 VPC Endpoint 來讓私有資源能安全地存取外部網路。
+
+重點摘要
+- 私有子網沒有對外 IP，無法直接連到 Internet。
+- 若要由 private subnet 對外連線，可使用 NAT Gateway（或自行架的 NAT Instance），或針對 AWS 服務使用 VPC Endpoint（避免走 NAT）。
+
+基本架構（常見）
+1. Public subnet：掛載 Internet Gateway（IGW），放置 ALB、bastion、或 NAT Gateway。
+2. Private subnet：放應用程式／容器，透過 route table 指向 NAT Gateway 做外網出站。
+3. Route table（private）加入 0.0.0.0/0 → nat-gateway-id。
+
+NAT Gateway vs NAT Instance
+- NAT Gateway：AWS 管理、穩定且高可用，但會產生按小時計費與資料傳輸費用（簡單、推薦用於生產）。
+- NAT Instance：自行管理（EC2），費用較低但需處理 HA/維運，較適合預算有限且能維運的人員。
+
+省錢且安全的替代：VPC Endpoint
+- 如果只需存取 AWS 服務（S3、ECR、SSM、CloudWatch 等），建議使用 VPC Endpoint（gateway 或 interface），流量不會經過 NAT，能省成本並增加安全性。
+
+快速 AWS CLI 範例
+- 分配 EIP 並建立 NAT Gateway：
+```bash
+# 1) 分配彈性 IP
+aws ec2 allocate-address --domain vpc --region ap-northeast-1
+
+# 2) 建立 NAT Gateway（需 public-subnet-id 與 allocation-id）
+aws ec2 create-nat-gateway --subnet-id <public-subnet-id> --allocation-id <eip-alloc-id> --region ap-northeast-1
+
+# 3) 在 private route table 新增路由指向 NAT Gateway
+aws ec2 create-route --route-table-id <private-rtb-id> --destination-cidr-block 0.0.0.0/0 --nat-gateway-id <nat-gateway-id>
+```
+
+- 建立 VPC Endpoint（S3 example, gateway type）：
+```bash
+aws ec2 create-vpc-endpoint --vpc-id <vpc-id> --service-name com.amazonaws.ap-northeast-1.s3 --route-table-ids <rtb-id>
+```
+- ECR 相關 Endpoint（interface type，通常需多個 service）：
+```bash
+aws ec2 create-vpc-endpoint --vpc-id <vpc-id> --service-name com.amazonaws.ap-northeast-1.ecr.api --subnet-ids <subnet-ids> --security-group-ids <sg-id>
+# 另外也建立 ecr.dkr、sts、s3 等需要的 endpoint
+```
+
+注意事項與建議
+- 成本：NAT Gateway 會產生按小時計費與資料傳輸費用，頻繁的大量外網流量可能成本較高，先評估流量模式。  
+- 安全：使用 Security Group 與 NACL 控制出入流量，僅允許必要的 outbound target。  
+- 最佳實務：若可能，將 CI/CD runner 或 build 任務放在有外網的環境（或使用 VPC Endpoint 拉取 ECR/S3），避免在 private subnet 上大量依賴 NAT。  
+- 當需要對外提供服務（public），把入口放在 public subnet（ALB / API Gateway），內部服務仍置於 private subnet。
+
+是否要我把這段放到 `README.md`（專案讀者版）或產生一個 Terraform 範本來自動建立 VPC/public/private/NAT + Endpoint？
 
 ## 參考
 - AWS IAM 文件：https://docs.aws.amazon.com/iam/
 - AWS CLI 文件：https://docs.aws.amazon.com/cli/
 - ECR 文件：https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html
+
+

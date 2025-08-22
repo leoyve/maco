@@ -23,9 +23,10 @@ public class JpaTodoRepository implements TodoRepository {
     private final TodoJpaRepo repo;
 
     @Override
-    public void save(TodoResult result) {
+    public void save(String userToken, TodoResult result) {
         try {
             TodoEntity entity = TodoMapper.toEntity(result);
+            entity.setUserToken(userToken);
             repo.save(entity);
         } catch (DataAccessException e) {
             throw new InfraException("Failed to save todo result", e);
@@ -33,10 +34,9 @@ public class JpaTodoRepository implements TodoRepository {
     }
 
     @Override
-    public List<TodoResult> findTodoByTimeRange(Instant start, Instant end) {
+    public List<TodoResult> findTodoByTimeRange(String userToken, Instant start, Instant end) {
         try {
-            List<TodoEntity> entities = repo.findByStatusAndTodoTimeBetweenOrderByTodoTimeAsc(
-                    TodoEntity.Status.TODO, start, end);
+            List<TodoEntity> entities = repo.findByUserTokenAndTodoTime(userToken, start, end);
             return entities.stream().map(TodoMapper::toDomain).collect(Collectors.toList());
         } catch (DataAccessException e) {
             throw new InfraException("Failed to query todo by status and time range", e);

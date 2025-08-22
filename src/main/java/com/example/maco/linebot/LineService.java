@@ -114,7 +114,6 @@ public class LineService {
                         ObjectMapper mapper = new ObjectMapper();
                         TodoResultDto todoResultDto = mapper.convertValue(processRes.getResult(), TodoResultDto.class);
                         TodoResult todoResult = TodoMapper.toDomain(todoResultDto);
-                        todoResult.setUserToken(model.getUserToken());
 
                         if (todoResult == null) {
                             log.warn("TodoResultDto is null, userId: {}, messageId: {}", model.getUserToken(),
@@ -122,6 +121,7 @@ public class LineService {
                             sendReply(model.getReplyToken(), "[代辦事項] 無法處理您的請求，請稍後再試");
                             return;
                         }
+
                         if (!todoResult.isClear()) {
                             sendReply(model.getReplyToken(), "[代辦事項] " + todoResult.getRecommendation());
                             return;
@@ -131,7 +131,7 @@ public class LineService {
                         String reply;
                         if ("addTodo".equals(todoResult.getIntent())) {
                             try {
-                                todoService.insertTodo(todoResult);
+                                todoService.insertTodo(model.getUserToken(), todoResult);
                                 reply = todoResult.toUserMessageForAdd();
                                 sendReply(model.getReplyToken(), reply);
                                 log.info("新增代辦成功, userId: {}, messageId: {}", model.getUserToken(),
@@ -144,15 +144,20 @@ public class LineService {
                                 sendReply(model.getReplyToken(), reply);
                             }
                         } else if ("queryTodo".equals(todoResult.getIntent())) {
-                            List<TodoResult> todoResults = todoService.getTodoSummary(
+                            List<TodoResult> todoResults = todoService.getTodoSummary(model.getUserToken(),
                                     todoResult.getEntities().getTime().getStartDate(),
                                     todoResult.getEntities().getTime().getEndDate());
                             if (todoResults.isEmpty()) {
                                 sendReply(model.getReplyToken(), "太棒了！您在指定時間範圍內沒有待辦事項。");
                             } else {
+                                if (todoResults.size() > 10) {
+                                    sendReply(model.getReplyToken(),
+                                            "您有 " + todoResults.size() + " 筆待辦事項，請縮小查詢範圍（目前僅支援查詢 10 筆以內）");
+                                    return;
+                                }
                                 String flexMessage = lineFlexMessageBuilder.buildTodoListJson(todoResults);
                                 log.info("Flex message: " + flexMessage);
-                                sendFlexReplyFromJson(model.getReplyToken(), flexMessage, "TEST");
+                                sendFlexReplyFromJson(model.getReplyToken(), flexMessage, "Todo List");
                             }
                         } else {
                             reply = "[代辦事項] " + todoResult.getEntities().getTask();

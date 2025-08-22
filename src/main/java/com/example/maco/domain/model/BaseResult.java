@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BaseResult {
-    private String userToken;
     private String intent;
     private String domain;
     private boolean isClear;

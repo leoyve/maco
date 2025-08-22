@@ -215,9 +215,16 @@ NLPService/
    cd NLPService
    pip install -r requirements.txt
    ```
-2. 啟動 FastAPI 服務：
+2. 啟動 FastAPI 服務（開發模式）：
    ```bash
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+3. 建置為 Docker 映像（若要在容器中執行）：
+   ```bash
+   # 在 NLPService 目錄下執行（範例：在 macOS/Apple Silicon 架構上強制以 amd64 平台建置）
+   docker build --platform linux/amd64 -t python-nlp-service .
+   # 執行容器（將 8000 port 對應到主機）
+   docker run --rm -p 8000:8000 python-nlp-service
    ```
 
 ---

@@ -6,8 +6,8 @@ import java.util.List;
 import com.example.maco.domain.model.todo.TodoResult;
 
 public interface TodoRepository {
-    void save(TodoResult result); // saveOrUpdate
+    void save(String userToken, TodoResult result); // saveOrUpdate
 
-    List<TodoResult> findTodoByTimeRange(Instant start, Instant end);
+    List<TodoResult> findTodoByTimeRange(String userToken, Instant start, Instant end);
 
 }
