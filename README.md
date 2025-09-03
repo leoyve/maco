@@ -200,11 +200,11 @@
 ### NLPService 目錄結構
 ```
 NLPService/
-├── main.py           # FastAPI 主程式
-├── models.py         # 請求/回應資料結構
+├── main.py           # FastAPI Service
+├── models.py         # Request/Response Data Structures
 ├── service.py        # 各領域分析邏輯
-├── prompts.py        # AI 提示詞
-├── requirements.txt  # Python 依賴
+├── prompts.py        # AI Prompt
+├── requirements.txt  # Python Dependence
 ├── Dockerfile        # 容器化設定
 └── README.md         # NLPService 說明
 ```
@@ -307,4 +307,4 @@ Maestro/
 ---
 
 ## 授權 (License)
-本專案採用 MIT 授權。詳情請見 `LICENSE` 檔案。
+This project is licensed under the MIT License. For details, see the LICENSE file.

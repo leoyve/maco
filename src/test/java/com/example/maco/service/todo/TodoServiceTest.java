@@ -23,13 +23,13 @@ public class TodoServiceTest {
 
     @Test
     void insertTodo_nullModel_throws() {
-        assertThrows(RuntimeException.class, () -> service.insertTodo(null));
+        assertThrows(RuntimeException.class, () -> service.insertTodo("null", null));
     }
 
     @Test
     void insertTodo_missingEntities_throws() {
         TodoResult r = new TodoResult();
-        assertThrows(RuntimeException.class, () -> service.insertTodo(r));
+        assertThrows(RuntimeException.class, () -> service.insertTodo("null", r));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TodoServiceTest {
         TodoResult r = new TodoResult();
         r.setIntent("addTodo");
         r.setEntities(new TodoEntities());
-        assertThrows(RuntimeException.class, () -> service.insertTodo(r));
+        assertThrows(RuntimeException.class, () -> service.insertTodo("null", r));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class TodoServiceTest {
         e.setStatus("DONE");
         r.setIntent("addTodo");
         r.setEntities(e);
-        assertThrows(RuntimeException.class, () -> service.insertTodo(r));
+        assertThrows(RuntimeException.class, () -> service.insertTodo("null", r));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class TodoServiceTest {
         r.setIntent("addTodo");
         r.setEntities(e);
 
-        service.insertTodo(r);
-        Mockito.verify(repo).save(r);
+        service.insertTodo("null", r);
+        Mockito.verify(repo).save("null", r);
     }
 }

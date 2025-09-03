@@ -100,14 +100,14 @@ public class LineService {
     // 各 domain 對應的 Service 處理方法 (非同步)
     @Async("taskExecutor")
     public CompletableFuture<Void> handleTodoAsync(LineMessage model, String domain) {
-        log.info("處理代辦事項 domain: {}, userId: {}, messageId: {}", domain, model.getUserToken(), model.getMessageId());
+        log.info("Processing todo domain={}, userId={}, messageId={}", domain, model.getUserToken(),
+                model.getMessageId());
         return NlpClient
                 .callNlpApiAsync("/process", new ProcessRequest(domain, model.getMessage()), ProcessResponse.class)
                 .timeout(Duration.ofSeconds(20))
                 .toFuture()
                 .thenAccept(processRes -> {
-                    log.info("NLP /process response: {}, userId: {}, messageId: {}",
-                            processRes != null ? processRes.getResult() : "null", model.getUserToken(),
+                    log.info("NLP /process response received, userId={}, messageId={}", model.getUserToken(),
                             model.getMessageId());
                     // 6. 處理 NLP 回傳結果
                     if (processRes != null && processRes.getResult() != null) {
@@ -116,14 +116,14 @@ public class LineService {
                         TodoResult todoResult = TodoMapper.toDomain(todoResultDto);
 
                         if (todoResult == null) {
-                            log.warn("TodoResultDto is null, userId: {}, messageId: {}", model.getUserToken(),
+                            log.warn("TodoResultDto is null, userId={}, messageId={}", model.getUserToken(),
                                     model.getMessageId());
-                            sendReply(model.getReplyToken(), "[代辦事項] 無法處理您的請求，請稍後再試");
+                            sendReply(model.getReplyToken(), "[待辦事項] 無法處理您的請求，請稍後再試");
                             return;
                         }
 
                         if (!todoResult.isClear()) {
-                            sendReply(model.getReplyToken(), "[代辦事項] " + todoResult.getRecommendation());
+                            sendReply(model.getReplyToken(), "[待辦事項] " + todoResult.getRecommendation());
                             return;
                         }
 
@@ -134,13 +134,12 @@ public class LineService {
                                 todoService.insertTodo(model.getUserToken(), todoResult);
                                 reply = todoResult.toUserMessageForAdd();
                                 sendReply(model.getReplyToken(), reply);
-                                log.info("新增代辦成功, userId: {}, messageId: {}", model.getUserToken(),
+                                log.info("Todo added successfully, userId={}, messageId={}", model.getUserToken(),
                                         model.getMessageId());
                             } catch (Exception ex) {
-                                log.error("新增代辦失敗, userId: {}, messageId: {}", model.getUserToken(),
-                                        model.getMessageId(),
-                                        ex);
-                                reply = "新增代辦失敗，請稍後再試";
+                                log.error("Failed to add todo, userId={}, messageId={}", model.getUserToken(),
+                                        model.getMessageId(), ex);
+                                reply = "新增待辦失敗，請稍後再試";
                                 sendReply(model.getReplyToken(), reply);
                             }
                         } else if ("queryTodo".equals(todoResult.getIntent())) {
@@ -156,23 +155,22 @@ public class LineService {
                                     return;
                                 }
                                 String flexMessage = lineFlexMessageBuilder.buildTodoListJson(todoResults);
-                                log.info("Flex message: " + flexMessage);
+                                // log.info("Flex message: " + flexMessage);
                                 sendFlexReplyFromJson(model.getReplyToken(), flexMessage, "Todo List");
                             }
                         } else {
-                            reply = "[代辦事項] " + todoResult.getEntities().getTask();
+                            reply = "[待辦事項] " + todoResult.getEntities().getTask();
                             sendReply(model.getReplyToken(), reply);
                         }
                     } else {
-                        log.warn("ProcessResponse result is null, userId: {}, messageId: {}", model.getUserToken(),
+                        log.warn("NLP /process returned null result, userId={}, messageId={}", model.getUserToken(),
                                 model.getMessageId());
-                        sendReply(model.getReplyToken(), "[代辦事項] 無法處理您的請求，請稍後再試");
+                        sendReply(model.getReplyToken(), "[待辦事項] 無法處理您的請求，請稍後再試");
                     }
                 }).exceptionally(e -> {
-                    log.error("NLP /process error, userId: {}, messageId: {}", model.getUserToken(),
-                            model.getMessageId(),
-                            e);
-                    sendReply(model.getReplyToken(), "[代辦事項] 系統出現些許錯誤，請稍後再試");
+                    log.error("NLP /process error, userId={}, messageId={}", model.getUserToken(),
+                            model.getMessageId(), e);
+                    sendReply(model.getReplyToken(), "[待辦事項] 系統出現些許錯誤，請稍後再試");
                     return null;
                 });
     }
@@ -259,7 +257,7 @@ public class LineService {
 
     // 保留舊簽名的相容方法（會使用預設 altText）
     public void sendFlexReplyFromJson(String replyToken, String flexJson) {
-        sendFlexReplyFromJson(replyToken, flexJson, "代辦清單");
+        sendFlexReplyFromJson(replyToken, flexJson, "待辦清單");
     }
 
     public void pushMessage(String userId, String message) {

@@ -2,15 +2,9 @@ package com.example.maco.linebot;
 
 import com.example.maco.domain.model.todo.TodoResult;
 import com.example.maco.infra.jpa.util.DateTimeUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.linecorp.bot.messaging.model.FlexBox;
-import com.linecorp.bot.messaging.model.FlexBubble;
-import com.linecorp.bot.messaging.model.FlexCarousel;
-import com.linecorp.bot.messaging.model.FlexMessage;
-import com.linecorp.bot.messaging.model.FlexText;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.time.*;
 
 @Component
 public class LineFlexMessageBuilder {
@@ -111,14 +102,25 @@ public class LineFlexMessageBuilder {
         titleText.put("weight", "bold");
         if ("DONE".equals(todo.getEntities().getStatus())) {
             titleText.put("decoration", "line-through");
-            titleText.put("color", "#AAAAAA");
+            titleText.put("color", "#0c0808ff");
         }
 
         ObjectNode timeText = objectMapper.createObjectNode();
         timeText.put("type", "text");
         // You'll need a method to format the date/time nicely
-        timeText.put("text", DateTimeUtils.formatInstantToLocal(todo.getEntities().getTime().getTimestamp())); // Simple
-                                                                                                               // version
+
+        Instant ts = DateTimeUtils.parseToInstant(todo.getEntities().getTime().getTimestamp());
+        String location = todo.getEntities().getLocation() == null ? "" : todo.getEntities().getLocation();
+
+        if (ts != null) {
+            ZoneId zone = ZoneId.systemDefault();
+            String dayLabel = DateTimeUtils.formatFlexDayLabel(ts, zone);
+            String timeStr = DateTimeUtils.formatFlexTime(ts, zone);
+            timeText.put("text", dayLabel + " " + timeStr + (location.isEmpty() ? "" : " @ " + location));
+        } else {
+            timeText.put("text", location);
+        }
+        // version
         timeText.put("size", "xs");
         timeText.put("color", "#B2B2B2");
 
