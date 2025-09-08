@@ -10,4 +10,7 @@ public interface TodoRepository {
 
     List<TodoResult> findTodoByTimeRange(String userToken, Instant start, Instant end);
 
+    int deleteById(String userToken, Long todoId);
+
+    int completeById(String userToken, Long todoId, Instant finishTime); // ← 新增 finishTime 參數
 }

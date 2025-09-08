@@ -85,7 +85,7 @@ public class LineFlexMessageBuilder {
             statusIconContents.put("weight", "bold");
         } else {
             statusIconContents.put("text", "●");
-            statusIconContents.put("color", "#BDBDBD");
+            statusIconContents.put("color", "#FFB74D");
         }
 
         ObjectNode statusIconWrapper = objectMapper.createObjectNode();
@@ -105,20 +105,30 @@ public class LineFlexMessageBuilder {
             titleText.put("color", "#0c0808ff");
         }
 
+        // Build Time/Location Summary
         ObjectNode timeText = objectMapper.createObjectNode();
         timeText.put("type", "text");
-        // You'll need a method to format the date/time nicely
+        timeText.put("wrap", true);
+        timeText.put("maxLines", 2);
 
-        Instant ts = DateTimeUtils.parseToInstant(todo.getEntities().getTime().getTimestamp());
+        Instant ts = DateTimeUtils.parseToInstant(
+                todo.getEntities().getTime() != null ? todo.getEntities().getTime().getTimestamp() : null);
         String location = todo.getEntities().getLocation() == null ? "" : todo.getEntities().getLocation();
 
         if (ts != null) {
             ZoneId zone = ZoneId.systemDefault();
             String dayLabel = DateTimeUtils.formatFlexDayLabel(ts, zone);
             String timeStr = DateTimeUtils.formatFlexTime(ts, zone);
-            timeText.put("text", dayLabel + " " + timeStr + (location.isEmpty() ? "" : " @ " + location));
-        } else {
+            String composed = (dayLabel + " " + timeStr).trim();
+            if (location != null && !location.isEmpty()) {
+                composed += "\n @ " + location;
+            }
+
+            timeText.put("text", composed);
+        } else if (!location.isEmpty()) {
             timeText.put("text", location);
+        } else {
+            timeText.put("text", "Not Time or Location");
         }
         // version
         timeText.put("size", "xs");
@@ -151,9 +161,8 @@ public class LineFlexMessageBuilder {
             completeAction.put("displayText", "完成「" + todo.getEntities().getTask() + "」");
 
             ((ArrayNode) buttonWrapper.putArray("contents")).add(completeButton);
-        }
-        // 目前不支援「修改」功能，使用者可先刪除再新增（避免直接修改流程複雜性）
 
+        }
         ObjectNode deleteButton = objectMapper.createObjectNode();
         deleteButton.put("type", "button");
         deleteButton.put("style", "secondary");

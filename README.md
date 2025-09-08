@@ -53,11 +53,37 @@
 - application.properties 增加 HikariCP 連線池與 SQL 日誌設定。
 - README.md 增加 DB 設計、Spring Boot 連接 PostgreSQL 教學。
 - 新增 Flyway 版本化 migration 支援：將 SQL migration 檔放在 `src/main/resources/db/migration/`（例如 `V1__init_schema.sql`、`V2__...sql`、`V3__...sql`）。已在 `pom.xml` 加入 `flyway-core` 與 `flyway-database-postgresql` 依賴，啟動時 Spring Boot 會自動套用未執行的版本。
-  - 注意事項：版本號需唯一（不可有兩個相同 `V2__...`），已套用的 migration 不要直接修改，要新增新的版本檔（例如 `V4__...sql`）。若需要可重覆執行的 migration，使用 repeatable migration（`R__description.sql`）。如需接受先前順序之外的版本，可設定 `spring.flyway.out-of-order=true`（慎用）。
+  - 注意事項：版本號需唯一（不可有兩個相同 `V2__...`）。
   - 驗證：啟動後檢查資料表 `flyway_schema_history` 或查看啟動日誌確認哪些 migration 已套用。
 
----
+2025/09/08
+- 修正 `LineFlexMessageBuilder`
+  - 加入 defensive null-check，避免 `todo.getEntities().getTime()` 為 null 導致 NPE。
+  - 保證所有 Flex text 欄位為非空字串，避免 LINE API 回傳 "must be non-empty text"。
+  - time/location 欄位支援自動換行（`wrap: true`, `maxLines: 2`），若有地點會另起一行顯示 "@ 地點"；無地點則不顯示該行。
+- `NLPService`
+  - 更新 `prompts.py` 中 `get_todo_prompt`：強制 JSON-only 回傳，time 使用 `yyyy-MM-dd HH:mm`；範例加入單一時間與時間範圍格式。
+- `LineService` / Messaging
+  - 補充：replyMessage 一次最多可回 5 則訊息（Flex、Text 混合計算）。
+- JPA 刪除查詢（注意）
+  - 若用 JPQL 的 DELETE 查詢，需於 repository 方法加上 `@Modifying` 與 `@Transactional`，或改用 `EntityManager.createQuery(...).executeUpdate()`，否則會拋出 `IllegalSelectQueryException`。
+- UI 色彩建議
+  - 進行中（in-progress）推薦顏色：`#FFB74D`（橙色，與完成綠 `#1DB446` 對比明顯）。
+  - 亮綠候選（供選擇）：`#00E676`、`#00C853`、`#1DB446`。
+- 測試與驗證建議
+  - 針對 `time=null`、`location=null` 與 `task` 為空的情境做單元/整合測試；在本地先印出 Flex JSON 確認所有 text 欄位非空再發送。
 
+---
+## 待辦
+- FlexMessage 分頁功能
+- 使用者一次輸入，一次幫我新增完待辦
+ ```text
+9/21 慶生
+9/26 拿蛋黃酥
+10/1 島語
+ ```
+
+---
 ## 主要功能
 - 透過 Webhook 接收使用者發送的文字訊息。
 - Echo 功能：原封不動回覆訊息。
@@ -99,17 +125,7 @@
 2. **設定 LINE Channel**
    - 取得 Channel secret 與 Channel access token。
 3. **設定環境變數**
-   - 請參考 `.env.example`，建立 `.env.dev` 並填入金鑰與 DB 連線資訊。
-4. **啟動 Spring Boot 應用程式**
-   - 一鍵啟動：
-     ```bash
-     ./start-dev.sh
-     ```
-   - 或手動：
-     ```bash
-     export $(grep -v '^#' .env.dev | xargs) && mvn spring-boot:run
-     ```
-5. **使用 ngrok 建立公開通道**
+4. **使用 ngrok 建立公開通道**
    ```bash
    ngrok http 8080
    ```
@@ -118,29 +134,6 @@
 ---
 
 ## 資料庫設定
-- PostgreSQL 連線：
-  ```bash
-  psql -h localhost -p 5432 -U postgres -W
-  ```
-- pom.xml 依賴：
-  ```xml
-  <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.7.3</version>
-  </dependency>
-  ```
-- application.properties 範例：
-  ```properties
-  spring.datasource.url=${SPRING_DATASOURCE_URL}
-  spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-  spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-  spring.datasource.driver-class-name=org.postgresql.Driver
-  spring.jpa.hibernate.ddl-auto=update
-  spring.jpa.show-sql=true
-  logging.level.org.hibernate.SQL=DEBUG
-  logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
-  ```
 - Flyway migration：
   - 將 SQL migration 檔放在 `src/main/resources/db/migration/`（例如 `V1__init_schema.sql`、`V2__...sql`、`V3__...sql`）。
   - 已在 `pom.xml` 加入 `flyway-core` 與 `flyway-database-postgresql` 依賴，啟動時 Spring Boot 會自動套用未執行的版本。
@@ -151,19 +144,6 @@
     - 如需接受先前順序之外的版本，可設定 `spring.flyway.out-of-order=true`（慎用）。
   - 驗證：啟動後檢查資料表 `flyway_schema_history` 或查看啟動日誌確認哪些 migration 已套用。
 - 建議使用 Spring Data JPA 存取資料。
-
----
-
-## 本機啟動
-- 一鍵啟動：
-  ```bash
-  ./start-dev.sh
-  ```
-- 或手動：
-  ```bash
-  export $(grep -v '^#' .env.dev | xargs) && mvn spring-boot:run
-  ```
-
 ---
 
 ## 高併發非同步設計

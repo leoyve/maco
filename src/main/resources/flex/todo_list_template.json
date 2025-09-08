@@ -24,7 +24,7 @@
                 "type": "text",
                 "text": "進行中的任務",
                 "size": "sm",
-                "color": "#8C8C8C",
+                "color": "#1DB446",
                 "weight": "bold"
             },
             {
@@ -42,7 +42,7 @@
                             {
                                 "type": "text",
                                 "text": "●",
-                                "color": "#BDBDBD",
+                                "color": "#1DB446",
                                 "size": "sm",
                                 "flex": 0
                             }

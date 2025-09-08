@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import javax.sound.sampled.Line;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -277,6 +279,48 @@ public class LineService {
 
     public void mockPushMessage(String userId, String message) {
         log.info("Mock push message to userId: {}, message: {}", userId, message);
+    }
+
+    public boolean deleteUserTodo(LineMessageDto lineMessageDto) {
+        try {
+            lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
+            LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
+            // 呼叫您的 Service 去更新資料庫
+            int deletedCount = todoService
+                    .deleteTodoById(lineMessage.getUserToken(),
+                            Long.parseLong(lineMessageDto.getPostbackParams().get("todo_id")));
+            if (deletedCount > 0) {
+                return true;
+            } else {
+                log.warn("No todo deleted, userId={}, todoId={}", lineMessage.getUserToken(),
+                        lineMessageDto.getPostbackParams().get("todo_id"));
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete todo", e);
+            return false;
+        }
+    }
+
+    public boolean completeUserTodo(LineMessageDto lineMessageDto) {
+        try {
+            lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
+            LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
+            // 呼叫您的 Service 去更新資料庫
+            int updatedCount = todoService
+                    .completeTodoById(lineMessage.getUserToken(),
+                            Long.parseLong(lineMessageDto.getPostbackParams().get("todo_id")));
+            if (updatedCount > 0) {
+                return true;
+            } else {
+                log.warn("No todo updated, userId={}, todoId={}", lineMessage.getUserToken(),
+                        lineMessageDto.getPostbackParams().get("todo_id"));
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to complete todo", e);
+            return false;
+        }
     }
 
 }

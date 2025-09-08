@@ -24,7 +24,7 @@ public class LineMessageMapper {
             return null;
         }
         return new LineMessage(entity.getUserToken(), entity.getMessage(), entity.getReceiveTime(),
-                entity.getType(), entity.getReplyToken(), entity.getMessageId());
+                entity.getType(), entity.getReplyToken(), entity.getMessageId(), null);
     }
 
     public static LineMessage toDomain(LineMessageDto dto) {
@@ -36,6 +36,7 @@ public class LineMessageMapper {
                 dto.getReceiveTime(),
                 dto.getType(),
                 dto.getReplyToken(),
-                dto.getMessageId());
+                dto.getMessageId(),
+                dto.getPostbackParams());
     }
 }

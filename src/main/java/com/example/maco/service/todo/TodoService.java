@@ -54,4 +54,20 @@ public class TodoService {
         return todoRepo.findTodoByTimeRange(userToken, start, end);
     }
 
+    @Transactional
+    public int deleteTodoById(String userToken, Long todoId) {
+        if (todoId == null) {
+            throw new DomainException("Todo ID must not be null");
+        }
+        return todoRepo.deleteById(userToken, todoId);
+    }
+
+    @Transactional
+    public int completeTodoById(String userToken, Long todoId) {
+        if (todoId == null) {
+            throw new DomainException("Todo ID must not be null");
+        }
+        return todoRepo.completeById(userToken, todoId, Instant.now());
+    }
+
 }

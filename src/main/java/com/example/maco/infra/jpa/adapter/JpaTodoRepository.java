@@ -42,4 +42,20 @@ public class JpaTodoRepository implements TodoRepository {
             throw new InfraException("Failed to query todo by status and time range", e);
         }
     }
+
+    public int deleteById(String userToken, Long todoId) {
+        try {
+            return repo.deleteByUserTokenAndId(userToken, todoId);
+        } catch (DataAccessException e) {
+            throw new InfraException("Failed to delete todo by ID", e);
+        }
+    }
+
+    public int completeById(String userToken, Long todoId, Instant finishTime) {
+        try {
+            return repo.completeByUserTokenAndId(userToken, todoId, finishTime);
+        } catch (DataAccessException e) {
+            throw new InfraException("Failed to complete todo by ID", e);
+        }
+    }
 }

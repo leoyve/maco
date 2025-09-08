@@ -47,6 +47,9 @@ public class TodoEntity {
     @Column(name = "todo_time")
     private Instant todoTime;
 
+    @Column(name = "finish_time")
+    private Instant finishTime;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
