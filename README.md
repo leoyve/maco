@@ -223,6 +223,7 @@ Maestro/
 ├── pom.xml
 ├── README.md
 ├── start-dev.sh
+├── image/
 ├── NLPService/
 │   ├── Dockerfile
 │   ├── main.py
