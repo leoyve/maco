@@ -1,24 +1,35 @@
 package com.example.maco.linebot;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import javax.sound.sampled.Line;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.example.maco.linebot.model.LineMessageDto;
 import com.example.maco.linebot.model.RouterRequest;
 import com.example.maco.linebot.model.RouterResponse;
 import com.example.maco.linebot.util.NlpClient;
-import com.example.maco.adapters.db.jpa.LineUserMessageMapper;
-import com.example.maco.adapters.db.jpa.LineUserMessageRepository;
-import com.example.maco.adapters.db.jpa.LineUserMessage;
+import com.example.maco.service.todo.TodoService;
+import com.example.maco.service.user.LineMessageService;
+import com.example.maco.service.user.UserService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.maco.domain.dto.LineMessageDto;
+import com.example.maco.domain.dto.TodoResultDto;
+import com.example.maco.domain.model.todo.TodoResult;
+import com.example.maco.domain.model.user.LineMessage;
+import com.example.maco.infra.jpa.mapper.LineMessageMapper;
+import com.example.maco.infra.jpa.mapper.TodoMapper;
 import com.linecorp.bot.messaging.client.MessagingApiClient;
 import com.linecorp.bot.messaging.model.ReplyMessageRequest;
 import com.linecorp.bot.messaging.model.TextMessage;
 import com.linecorp.bot.messaging.model.PushMessageRequest;
+import com.linecorp.bot.messaging.model.FlexContainer;
+import com.linecorp.bot.messaging.model.FlexMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,88 +37,229 @@ import org.slf4j.LoggerFactory;
 import com.example.maco.linebot.model.ProcessRequest;
 import com.example.maco.linebot.model.ProcessResponse;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 @Service
 public class LineService {
 
     private static final Logger log = LoggerFactory.getLogger(LineService.class);
 
     private final MessagingApiClient messagingApiClient;
+    private final LineMessageService lineMessageService;
+    private final UserService userService;
+    private final TodoService todoService;
 
-    private final LineUserMessageRepository lineUserMessageRepository;
-
-    public LineService(MessagingApiClient messagingApiClient,
-            LineUserMessageRepository lineUserMessageRepository) {
-        this.messagingApiClient = messagingApiClient;
-        this.lineUserMessageRepository = lineUserMessageRepository;
-    }
+    private final LineFlexMessageBuilder lineFlexMessageBuilder;
 
     public String echoMessage(String message) {
         return message;
     }
 
-    @Async
-    @Transactional
+    @Async("taskExecutor")
     public CompletableFuture<Void> handleTextMessage(LineMessageDto lineMessageDto) {
-        // 先將訊息存進DB
-        LineUserMessage entity = LineUserMessageMapper.toEntity(lineMessageDto);
-        lineUserMessageRepository.save(entity);
-        lineUserMessageRepository.flush();
+        lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
+        LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
+        userService.upsertUser(lineMessage.getUserToken());
 
-        // 呼叫 NLPService 判斷 domain (非同步)
-        CompletableFuture<RouterResponse> routerFuture = CompletableFuture.supplyAsync(() -> NlpClient
-                .callNlpApi("/router", new RouterRequest(lineMessageDto.getMessage()), RouterResponse.class));
-
-        return routerFuture.thenAccept(routerRes -> {
-            String domain = routerRes != null ? routerRes.getDomain() : "unknown";
-            log.info("NLPService 判斷 domain: {}", domain);
-            switch (domain) {
-                case "todo":
-                    handleTodoAsync(lineMessageDto, domain);
-                    break;
-                case "health":
-                    handleHealthAsync(lineMessageDto, domain);
-                    break;
-                default:
-                    log.info("未知 domain，僅儲存訊息");
-            }
-        });
+        return NlpClient
+                .callNlpApiAsync("/router", new RouterRequest(lineMessage.getMessage()), RouterResponse.class)
+                .timeout(Duration.ofSeconds(20)) // 5. NLP API 超時設定
+                .toFuture()
+                .thenAccept(routerRes -> {
+                    String domain = routerRes != null ? routerRes.getDomain() : "unknown";
+                    log.info("NLPService 判斷 domain: {}, userId: {}, messageId: {}", domain, lineMessage.getUserToken(),
+                            lineMessage.getMessageId()); // 7. 日誌優化
+                    switch (domain) {
+                        case "todo":
+                            handleTodoAsync(lineMessage, domain)
+                                    .exceptionally(e -> {
+                                        log.error("handleTodoAsync error", e);
+                                        return null;
+                                    }); // 1. 異常處理
+                            break;
+                        case "health":
+                            handleHealthAsync(lineMessage, domain)
+                                    .exceptionally(e -> {
+                                        log.error("handleHealthAsync error", e);
+                                        return null;
+                                    }); // 1. 異常處理
+                            break;
+                        default:
+                            log.info("未知 domain，僅儲存訊息, userId: {}, messageId: {}", lineMessage.getUserToken(),
+                                    lineMessage.getMessageId()); // 7. 日誌優化
+                            sendReply(lineMessage.getReplyToken(), "未知的請求，請嘗試：\n1. 新增代辦事項\n2. 新增體重\n");
+                    }
+                })
+                .exceptionally(e -> {
+                    log.error("NLP /router error, userId: {}, messageId: {}", lineMessage.getUserToken(),
+                            lineMessage.getMessageId(), e);
+                    sendReply(lineMessage.getReplyToken(), "系統出現些許錯誤，請稍後再試");
+                    return null;
+                }); // 1. 異常處理
     }
 
     // 各 domain 對應的 Service 處理方法 (非同步)
-    @Async
-    public CompletableFuture<Void> handleTodoAsync(LineMessageDto dto, String domain) {
-        log.info("處理代辦事項 domain: {}", domain);
-        CompletableFuture<ProcessResponse> processFuture = CompletableFuture.supplyAsync(() -> NlpClient
-                .callNlpApi("/process", new ProcessRequest(domain, dto.getMessage()), ProcessResponse.class));
-        return processFuture.thenAccept(processRes -> {
-            log.info("NLP /process response: {}", processRes != null ? processRes.getResult() : "null");
-        });
+    @Async("taskExecutor")
+    public CompletableFuture<Void> handleTodoAsync(LineMessage model, String domain) {
+        log.info("Processing todo domain={}, userId={}, messageId={}", domain, model.getUserToken(),
+                model.getMessageId());
+        return NlpClient
+                .callNlpApiAsync("/process", new ProcessRequest(domain, model.getMessage()), ProcessResponse.class)
+                .timeout(Duration.ofSeconds(20))
+                .toFuture()
+                .thenAccept(processRes -> {
+                    log.info("NLP /process response received, userId={}, messageId={}", model.getUserToken(),
+                            model.getMessageId());
+                    // 6. 處理 NLP 回傳結果
+                    if (processRes != null && processRes.getResult() != null) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        TodoResultDto todoResultDto = mapper.convertValue(processRes.getResult(), TodoResultDto.class);
+                        TodoResult todoResult = TodoMapper.toDomain(todoResultDto);
+
+                        if (todoResult == null) {
+                            log.warn("TodoResultDto is null, userId={}, messageId={}", model.getUserToken(),
+                                    model.getMessageId());
+                            sendReply(model.getReplyToken(), "[待辦事項] 無法處理您的請求，請稍後再試");
+                            return;
+                        }
+
+                        if (!todoResult.isClear()) {
+                            sendReply(model.getReplyToken(), "[待辦事項] " + todoResult.getRecommendation());
+                            return;
+                        }
+
+                        // 依 intent 組合更友善訊息
+                        String reply;
+                        if ("addTodo".equals(todoResult.getIntent())) {
+                            try {
+                                todoService.insertTodo(model.getUserToken(), todoResult);
+                                reply = todoResult.toUserMessageForAdd();
+                                sendReply(model.getReplyToken(), reply);
+                                log.info("Todo added successfully, userId={}, messageId={}", model.getUserToken(),
+                                        model.getMessageId());
+                            } catch (Exception ex) {
+                                log.error("Failed to add todo, userId={}, messageId={}", model.getUserToken(),
+                                        model.getMessageId(), ex);
+                                reply = "新增待辦失敗，請稍後再試";
+                                sendReply(model.getReplyToken(), reply);
+                            }
+                        } else if ("queryTodo".equals(todoResult.getIntent())) {
+                            List<TodoResult> todoResults = todoService.getTodoSummary(model.getUserToken(),
+                                    todoResult.getEntities().getTime().getStartDate(),
+                                    todoResult.getEntities().getTime().getEndDate());
+                            if (todoResults.isEmpty()) {
+                                sendReply(model.getReplyToken(), "太棒了！您在指定時間範圍內沒有待辦事項。");
+                            } else {
+                                if (todoResults.size() > 10) {
+                                    sendReply(model.getReplyToken(),
+                                            "您有 " + todoResults.size() + " 筆待辦事項，請縮小查詢範圍（目前僅支援查詢 10 筆以內）");
+                                    return;
+                                }
+                                String flexMessage = lineFlexMessageBuilder.buildTodoListJson(todoResults);
+                                // log.info("Flex message: " + flexMessage);
+                                sendFlexReplyFromJson(model.getReplyToken(), flexMessage, "Todo List");
+                            }
+                        } else {
+                            reply = "[待辦事項] " + todoResult.getEntities().getTask();
+                            sendReply(model.getReplyToken(), reply);
+                        }
+                    } else {
+                        log.warn("NLP /process returned null result, userId={}, messageId={}", model.getUserToken(),
+                                model.getMessageId());
+                        sendReply(model.getReplyToken(), "[待辦事項] 無法處理您的請求，請稍後再試");
+                    }
+                }).exceptionally(e -> {
+                    log.error("NLP /process error, userId={}, messageId={}", model.getUserToken(),
+                            model.getMessageId(), e);
+                    sendReply(model.getReplyToken(), "[待辦事項] 系統出現些許錯誤，請稍後再試");
+                    return null;
+                });
     }
 
-    @Async
-    public CompletableFuture<Void> handleHealthAsync(LineMessageDto dto, String domain) {
-        log.info("處理健康 domain: {}", domain);
-        // 可依需求串接 /process 或其他服務
-        return CompletableFuture.completedFuture(null);
+    @Async("taskExecutor")
+    public CompletableFuture<Void> handleHealthAsync(LineMessage model, String domain) {
+        log.info("處理健康 domain: {}, userId: {}, messageId: {}", domain, model.getUserToken(), model.getMessageId());
+        return NlpClient
+                .callNlpApiAsync("/process", new ProcessRequest(domain, model.getMessage()), ProcessResponse.class)
+                .timeout(Duration.ofSeconds(20))
+                .toFuture()
+                .thenAccept(processRes -> {
+                    // log.info("NLP /process response: {}, userId: {}, messageId: {}",
+                    // processRes != null ? p
+                    // .getMessageId());
+
+                }).exceptionally(e -> {
+
+                    sendReply(model.getReplyToken(), "[健康] 系統出現些許錯誤，請稍後再試");
+
+                    return null;
+                });
     }
 
     public void sendReply(String replyToken, String message) {
-
-        // 建立一個要回覆的文字訊息
-        TextMessage replyText = new TextMessage("You Said: " + message); // Echo Bot: 回覆收到的同樣訊息
-
-        // 使用 replyToken 來回覆訊息
+        TextMessage replyText = new TextMessage(message);
         ReplyMessageRequest replyMessageRequest = new ReplyMessageRequest(
                 replyToken,
-                List.of(replyText), // 使用 List.of() 快速建立一個 List
+                List.of(replyText),
                 false);
-
-        // 執行發送
         try {
             messagingApiClient.replyMessage(replyMessageRequest).get();
+            log.info("Reply success, replyToken: {}, message: {}", replyToken, message);
         } catch (Exception e) {
-            log.error("Reply failed", e);
+            log.error("Reply failed, replyToken: {}, message: {}", replyToken, message, e);
         }
+    }
+
+    // 新增：直接以 FlexMessage 回覆（使用 LINE Messaging SDK 的 FlexMessage model）
+    public void sendFlexReply(String replyToken, FlexMessage flex) {
+        if (flex == null) {
+            log.warn("FlexMessage is null, will not send reply");
+            return;
+        }
+        ReplyMessageRequest replyMessageRequest = new ReplyMessageRequest(
+                replyToken,
+                List.of(flex),
+                false);
+        try {
+            messagingApiClient.replyMessage(replyMessageRequest).get();
+            log.info("Flex reply success, replyToken: {}", replyToken);
+        } catch (Exception e) {
+            log.error("Flex reply failed, replyToken: {}", replyToken, e);
+        }
+    }
+
+    // 新增：從 Flex JSON 字串建立 FlexMessage 並回覆（altText 可選）
+    public void sendFlexReplyFromJson(String replyToken, String flexJson, String altText) {
+        if (flexJson == null || flexJson.isBlank()) {
+            sendReply(replyToken, "[系統] 無法取得 Flex 內容");
+            return;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            // --- START: 這是核心修正 ---
+            // 1. 將 JSON 字串反序列化成「FlexContainer」物件，而不是「FlexMessage」
+            FlexContainer flexContainer = mapper.readValue(flexJson, FlexContainer.class);
+
+            // 2. 建立一個 FlexMessage，並將剛剛的 container 包進去
+            FlexMessage flexMessage = new FlexMessage(
+                    altText == null || altText.isBlank() ? "為您查詢到的待辦事項" : altText,
+                    flexContainer);
+            // --- END: 修正結束 ---
+
+            // 3. 呼叫 sendFlexReply 方法來發送
+            sendFlexReply(replyToken, flexMessage);
+        } catch (Exception e) {
+            log.error("Failed to parse Flex JSON, fallback to text reply", e);
+            sendReply(replyToken, "[系統] 無法解析 Flex 內容，請稍後再試");
+        }
+    }
+
+    // 保留舊簽名的相容方法（會使用預設 altText）
+    public void sendFlexReplyFromJson(String replyToken, String flexJson) {
+        sendFlexReplyFromJson(replyToken, flexJson, "待辦清單");
     }
 
     public void pushMessage(String userId, String message) {
@@ -124,4 +276,51 @@ public class LineService {
             log.error("Push failed", e);
         }
     }
+
+    public void mockPushMessage(String userId, String message) {
+        log.info("Mock push message to userId: {}, message: {}", userId, message);
+    }
+
+    public boolean deleteUserTodo(LineMessageDto lineMessageDto) {
+        try {
+            lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
+            LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
+            // 呼叫您的 Service 去更新資料庫
+            int deletedCount = todoService
+                    .deleteTodoById(lineMessage.getUserToken(),
+                            Long.parseLong(lineMessageDto.getPostbackParams().get("todo_id")));
+            if (deletedCount > 0) {
+                return true;
+            } else {
+                log.warn("No todo deleted, userId={}, todoId={}", lineMessage.getUserToken(),
+                        lineMessageDto.getPostbackParams().get("todo_id"));
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete todo", e);
+            return false;
+        }
+    }
+
+    public boolean completeUserTodo(LineMessageDto lineMessageDto) {
+        try {
+            lineMessageService.saveMessage(LineMessageMapper.toDomain(lineMessageDto));
+            LineMessage lineMessage = LineMessageMapper.toDomain(lineMessageDto);
+            // 呼叫您的 Service 去更新資料庫
+            int updatedCount = todoService
+                    .completeTodoById(lineMessage.getUserToken(),
+                            Long.parseLong(lineMessageDto.getPostbackParams().get("todo_id")));
+            if (updatedCount > 0) {
+                return true;
+            } else {
+                log.warn("No todo updated, userId={}, todoId={}", lineMessage.getUserToken(),
+                        lineMessageDto.getPostbackParams().get("todo_id"));
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to complete todo", e);
+            return false;
+        }
+    }
+
 }

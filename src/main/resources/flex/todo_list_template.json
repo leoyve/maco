@@ -1,0 +1,222 @@
+{
+    "type": "bubble",
+    "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "📝 您的待辦事項",
+                "weight": "bold",
+                "size": "lg",
+                "color": "#1DB446"
+            }
+        ],
+        "paddingAll": "12px",
+        "backgroundColor": "#E8F8EF",
+        "spacing": "md"
+    },
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "進行中的任務",
+                "size": "sm",
+                "color": "#1DB446",
+                "weight": "bold"
+            },
+            {
+                "type": "separator",
+                "margin": "md"
+            },
+            {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "●",
+                                "color": "#1DB446",
+                                "size": "sm",
+                                "flex": 0
+                            }
+                        ],
+                        "width": "20px",
+                        "alignItems": "center"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "與 David 開會",
+                                "weight": "bold"
+                            },
+                            {
+                                "type": "text",
+                                "text": "今天 15:00 @ 星巴克",
+                                "size": "xs",
+                                "color": "#B2B2B2"
+                            }
+                        ],
+                        "flex": 3
+                    },
+                    {
+                        "type": "box",
+                        "layout": "horizontal",
+                        "contents": [
+                            {
+                                "type": "button",
+                                "action": {
+                                    "type": "message",
+                                    "label": "完成",
+                                    "text": "完成「與 David 開會」"
+                                },
+                                "style": "primary",
+                                "height": "sm",
+                                "color": "#3399FF"
+                            },
+                            {
+                                "type": "button",
+                                "action": {
+                                    "type": "message",
+                                    "label": "修改",
+                                    "text": "修改「與 David 開會」"
+                                },
+                                "style": "secondary",
+                                "height": "sm"
+                            }
+                        ],
+                        "flex": 2,
+                        "spacing": "sm"
+                    }
+                ],
+                "paddingTop": "md",
+                "alignItems": "center"
+            },
+            {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "●",
+                                "color": "#BDBDBD",
+                                "size": "sm",
+                                "flex": 0
+                            }
+                        ],
+                        "width": "20px",
+                        "alignItems": "center"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "去林口體育場打羽球",
+                                "weight": "bold"
+                            },
+                            {
+                                "type": "text",
+                                "text": "8月25日 09:00",
+                                "size": "xs",
+                                "color": "#B2B2B2"
+                            }
+                        ],
+                        "flex": 3
+                    },
+                    {
+                        "type": "box",
+                        "layout": "horizontal",
+                        "contents": [
+                            {
+                                "type": "button",
+                                "action": {
+                                    "type": "message",
+                                    "label": "完成",
+                                    "text": "完成「去林口體育場打羽球」"
+                                },
+                                "style": "primary",
+                                "height": "sm",
+                                "color": "#3399FF"
+                            },
+                            {
+                                "type": "button",
+                                "action": {
+                                    "type": "message",
+                                    "label": "修改",
+                                    "text": "修改「去林口體育場打羽球」"
+                                },
+                                "style": "secondary",
+                                "height": "sm"
+                            }
+                        ],
+                        "flex": 2,
+                        "spacing": "sm"
+                    }
+                ],
+                "paddingTop": "md",
+                "alignItems": "center"
+            },
+            {
+                "type": "separator",
+                "margin": "xl"
+            },
+            {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "✓",
+                                "color": "#1DB446",
+                                "size": "sm",
+                                "flex": 0,
+                                "weight": "bold"
+                            }
+                        ],
+                        "width": "20px",
+                        "alignItems": "center"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": "繳納信用卡費",
+                                "decoration": "line-through",
+                                "color": "#AAAAAA"
+                            },
+                            {
+                                "type": "text",
+                                "text": "8月17日",
+                                "size": "xs",
+                                "color": "#C3C3C3"
+                            }
+                        ]
+                    }
+                ],
+                "paddingTop": "md",
+                "alignItems": "center"
+            }
+        ]
+    }
+}

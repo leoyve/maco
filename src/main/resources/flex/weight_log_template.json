@@ -1,0 +1,107 @@
+{
+    "type": "bubble",
+    "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "⚖️ 您的體重紀錄",
+                "weight": "bold",
+                "size": "lg",
+                "color": "#6495ED"
+            }
+        ],
+        "paddingAll": "12px",
+        "backgroundColor": "#F0F8FF",
+        "spacing": "md"
+    },
+    "hero": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "{{LATEST_WEIGHT}} kg",
+                "size": "3xl",
+                "weight": "bold",
+                "align": "center",
+                "color": "#333333"
+            },
+            {
+                "type": "text",
+                "text": "最新紀錄於 {{LATEST_DATE}}",
+                "size": "sm",
+                "align": "center",
+                "color": "#999999",
+                "margin": "md"
+            }
+        ],
+        "paddingAll": "20px"
+    },
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "box",
+                "layout": "horizontal",
+                "alignItems": "center",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": "與上次相比",
+                        "flex": 2,
+                        "size": "sm",
+                        "color": "#555555"
+                    },
+                    {
+                        "type": "text",
+                        "text": "{{CHANGE_ICON}} {{CHANGE_VALUE}} kg",
+                        "weight": "bold",
+                        "color": "{{CHANGE_COLOR}}",
+                        "size": "md",
+                        "align": "end",
+                        "flex": 3
+                    }
+                ]
+            },
+            {
+                "type": "text",
+                "text": "上次紀錄：{{PREVIOUS_WEIGHT}} kg",
+                "size": "xs",
+                "color": "#AAAAAA",
+                "align": "end",
+                "margin": "sm"
+            }
+        ]
+    },
+    "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+            {
+                "type": "button",
+                "action": {
+                    "type": "message",
+                    "label": "✍️ 新增今日體重",
+                    "text": "新增體重"
+                },
+                "style": "primary",
+                "color": "#6495ED",
+                "height": "sm"
+            },
+            {
+                "type": "button",
+                "action": {
+                    "type": "message",
+                    "label": "📈 查看本週紀錄",
+                    "text": "查詢本週體重"
+                },
+                "style": "secondary",
+                "height": "sm"
+            }
+        ]
+    }
+}

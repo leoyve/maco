@@ -1,57 +1,37 @@
-package com.example.maco.adapters.db.jpa;
+package com.example.maco.domain.dto;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.*;
+import java.util.Map;
 
-@Entity
-@Table(name = "line_user_message")
-public class LineUserMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "user_id", nullable = false, length = 100)
-    private String userId;
-
-    @Column(name = "message", columnDefinition = "TEXT")
+public class LineMessageDto {
+    private String userToken;
     private String message;
-
-    @Column(name = "receive_time", nullable = false)
     private LocalDateTime receiveTime;
-
-    @Column(name = "type", nullable = false, length = 20)
     private String type;
-
-    @Column(name = "reply_token", length = 50)
     private String replyToken;
-
-    @Column(name = "message_id", length = 50)
     private String messageId;
+    private Map<String, String> postbackParams;
 
-    // getter, setter, constructor
-    public LineUserMessage() {
+    public LineMessageDto() {
     }
 
-    public LineUserMessage(String userId, String message, LocalDateTime receiveTime, String type, String replyToken,
-            String messageId) {
-        this.userId = userId;
+    public LineMessageDto(String userToken, String message, LocalDateTime receiveTime, String type, String replyToken,
+            String messageId, Map<String, String> postbackParams) {
+        this.userToken = userToken;
         this.message = message;
         this.receiveTime = receiveTime;
         this.type = type;
         this.replyToken = replyToken;
         this.messageId = messageId;
+        this.postbackParams = postbackParams;
     }
 
-    public Long getId() {
-        return id;
+    public String getUserToken() {
+        return userToken;
     }
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserToken(String userId) {
+        this.userToken = userId;
     }
 
     public String getMessage() {
@@ -92,5 +72,13 @@ public class LineUserMessage {
 
     public void setMessageId(String messageId) {
         this.messageId = messageId;
+    }
+
+    public Map<String, String> getPostbackParams() {
+        return postbackParams;
+    }
+
+    public void setPostbackParams(Map<String, String> postbackParams) {
+        this.postbackParams = postbackParams;
     }
 }
