@@ -22,8 +22,8 @@ public class NlpClient {
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(responseType)
-                    // 最小 retry：最多重試 1 次，短暫 backoff
-                    .retryWhen(Retry.backoff(1, Duration.ofMillis(300)))
+                    // 最小 retry：最多重試 3 次，短暫 backoff
+                    .retryWhen(Retry.backoff(3, Duration.ofMillis(300)))
                     .block();
             log.info("NLP {} response: {}", path, response);
             return response;
@@ -43,7 +43,7 @@ public class NlpClient {
                 .bodyToMono(responseType)
                 .doOnNext(res -> log.info("NLP {} response: {}", path, res))
                 .doOnError(e -> log.error("NLP {} 呼叫失敗", path, e))
-                // 最小 retry：最多重試 1 次，短暫 backoff
-                .retryWhen(Retry.backoff(1, Duration.ofMillis(300)));
+                // 最小 retry：最多重試 3 次，短暫 backoff
+                .retryWhen(Retry.backoff(3, Duration.ofMillis(300)));
     }
 }
