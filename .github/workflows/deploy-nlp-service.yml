@@ -40,7 +40,7 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t "${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT }}/${{ env.ARTIFACT_REPO }}/${{ env.DOCKER_IMAGE_NAME }}:latest" ./java-backend
+        docker build --platform linux/amd64 -t "${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT }}/${{ env.ARTIFACT_REPO }}/${{ env.DOCKER_IMAGE_NAME }}:latest" ./NLPService
         docker push "${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT }}/${{ env.ARTIFACT_REPO }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
         
     - name: Deploy to Cloud Run
