@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -22,52 +24,43 @@ public class LineFlexMessageBuilder {
     private static final Logger log = LoggerFactory.getLogger(LineFlexMessageBuilder.class);
     private final ObjectMapper objectMapper = new ObjectMapper(); // Reusable ObjectMapper
 
+    // 快取 template 作為 ObjectNode（只讀一次）
+    private ObjectNode cachedTodoTemplate;
+
+    @PostConstruct
+    private void loadTemplate() {
+        try (InputStream is = new ClassPathResource("flex/todo_list_template.json").getInputStream()) {
+            String todoTemplateJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            cachedTodoTemplate = (ObjectNode) objectMapper.readTree(todoTemplateJson);
+        } catch (Exception e) {
+            log.error("Failed to load flex template", e);
+            cachedTodoTemplate = null;
+        }
+    }
+
     public String buildTodoListJson(List<TodoResult> todos) {
         try {
-            // 1. Read the template file into a string
-            String templateJson;
-            try (InputStream is = new ClassPathResource("flex/todo_list_template.json").getInputStream()) {
-                templateJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            if (cachedTodoTemplate == null) {
+                log.warn("No cached template available");
+                return null;
             }
 
-            // 2. Parse the JSON string into a mutable ObjectNode
-            ObjectNode templateNode = (ObjectNode) objectMapper.readTree(templateJson);
+            // work on a deep copy so cachedTemplate 不會被改寫
+            ObjectNode templateNode = cachedTodoTemplate.deepCopy();
 
-            // 3. Navigate to the body.contents array and clear it
-            ArrayNode contentsNode = (ArrayNode) templateNode.path("body").path("contents");
+            ArrayNode contentsNode = (ArrayNode) templateNode.with("body").withArray("contents");
             contentsNode.removeAll();
 
-            int length = 50 * 1024; // 50 KB
-            // 4. Iterate through the to-do list and build new content
             for (TodoResult todo : todos) {
-                // For each to-do item, create a corresponding box component
                 ObjectNode todoBox = createTodoItemBox(todo);
-                try {
-                    String todoBoxStr = objectMapper.writeValueAsString(todoBox);
-                    int todoBoxSize = todoBoxStr.getBytes("UTF-8").length;
-                    if (length - todoBoxSize < 0) {
-                        log.warn("Todo list Flex Message size limit reached, stopping addition of more items.");
-                        break;
-                    } else {
-                        length -= todoBoxSize;
-                    }
-                } catch (Exception e) {
-                    log.error("Error calculating todo box size", e);
-                    ObjectNode errorBox = objectMapper.createObjectNode();
-                    errorBox.put("type", "text");
-                    errorBox.put("text", "Error loading todo item");
-                    contentsNode.add(errorBox);
-                }
-                todoBox.toString();
-                contentsNode.add(todoBox); // Add the new box to the contents array
+                contentsNode.add(todoBox);
             }
 
-            // 5. Convert the modified ObjectNode back to a JSON string
             return objectMapper.writeValueAsString(templateNode);
 
         } catch (Exception e) {
             log.error("Failed to build TodoList Flex JSON", e);
-            return null; // Return null on failure
+            return null;
         }
     }
 

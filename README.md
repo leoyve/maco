@@ -73,6 +73,21 @@
 - 測試與驗證建議
   - 針對 `time=null`、`location=null` 與 `task` 為空的情境做單元/整合測試；在本地先印出 Flex JSON 確認所有 text 欄位非空再發送。
 
+2025/09/18
+- 新增 DB migration
+  - 新增 `V5__add_finish_time_to_todos.sql`（ALTER TABLE 新增 `finish_time` 欄位，type = `timestamptz`，使用 `IF NOT EXISTS` 保護重複執行）。
+- JPA / Repository
+  - `TodoJpaRepo` 查詢改為：`ORDER BY CASE WHEN t.status = 'DONE' THEN 1 ELSE 0 END ASC, t.todoTime ASC`，將已完成項目排到最後。
+  - 刪除查詢已改為使用 `@Modifying` + `@Transactional` 或 `executeUpdate()`（避免 `IllegalSelectQueryException`）。
+- Flex 與 UI
+  - `LineFlexMessageBuilder`：加入 defensive null-checks，確保所有 Flex `text` 欄位非空，並讓 time/location 支援換行（`wrap: true` 與 `maxLines`）；若有地點，會在新行顯示 `@ 地點`。
+  - 建議將 LINE 圖片資源放到 `src/main/resources/static/line-assets/`（開發時可搭配 `ngrok` 暴露），或在生產環境使用 S3/CDN 提供 HTTPS URL。
+- LineService
+  - 在 `sendFlexReplyFromJson` 中改為重用 `ObjectMapper`（避免每次 new），並加入解析與建構的 timing log 以便量化耗時。
+  - 建議將 messaging API 的 network call 改為非同步或避免在主流程直接 `.get()`（以免阻塞）。
+- NLPService
+  - `prompts.py` 中 `get_todo_prompt` 已更新，強制 JSON-only 回傳，time 格式為 `yyyy-MM-dd HH:mm`，並提供多個範例。
+
 ---
 ## 待辦
 - FlexMessage 分頁功能
@@ -86,8 +101,6 @@
 ---
 ## 主要功能
 - 透過 Webhook 接收使用者發送的文字訊息。
-- Echo 功能：原封不動回覆訊息。
-- 支援 LINE Bot SDK for Java，簽章驗證。
 - 訊息儲存至 PostgreSQL。
 - 查詢歷史訊息。
 - 主動推播訊息（push message）。
