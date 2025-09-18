@@ -15,9 +15,11 @@ import com.example.maco.infra.jpa.mapper.TodoMapper;
 import com.example.maco.infra.jpa.repo.TodoJpaRepo;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class JpaTodoRepository implements TodoRepository {
 
     private final TodoJpaRepo repo;
@@ -36,7 +38,9 @@ public class JpaTodoRepository implements TodoRepository {
     @Override
     public List<TodoResult> findTodoByTimeRange(String userToken, Instant start, Instant end) {
         try {
+            log.info("findTodoByTimeRange start");
             List<TodoEntity> entities = repo.findByUserTokenAndTodoTime(userToken, start, end);
+            log.info("findTodoByTimeRange end");
             return entities.stream().map(TodoMapper::toDomain).collect(Collectors.toList());
         } catch (DataAccessException e) {
             throw new InfraException("Failed to query todo by status and time range", e);

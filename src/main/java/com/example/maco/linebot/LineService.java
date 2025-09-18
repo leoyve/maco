@@ -49,6 +49,7 @@ public class LineService {
     private final LineMessageService lineMessageService;
     private final UserService userService;
     private final TodoService todoService;
+    private final ObjectMapper mapper;
 
     private final LineFlexMessageBuilder lineFlexMessageBuilder;
 
@@ -145,9 +146,14 @@ public class LineService {
                                 sendReply(model.getReplyToken(), reply);
                             }
                         } else if ("queryTodo".equals(todoResult.getIntent())) {
+                            log.info("Querying todos for userId={}, messageId={}", model.getUserToken(),
+                                    model.getMessageId());
                             List<TodoResult> todoResults = todoService.getTodoSummary(model.getUserToken(),
                                     todoResult.getEntities().getTime().getStartDate(),
                                     todoResult.getEntities().getTime().getEndDate());
+                            log.info("Found {} todos for userId={}, messageId={}", todoResults.size(),
+                                    model.getUserToken(),
+                                    model.getMessageId());
                             if (todoResults.isEmpty()) {
                                 sendReply(model.getReplyToken(), "太棒了！您在指定時間範圍內沒有待辦事項。");
                             } else {
@@ -156,8 +162,9 @@ public class LineService {
                                             "您有 " + todoResults.size() + " 筆待辦事項，請縮小查詢範圍（目前僅支援查詢 10 筆以內）");
                                     return;
                                 }
+                                log.info("flexMessage Start");
                                 String flexMessage = lineFlexMessageBuilder.buildTodoListJson(todoResults);
-                                // log.info("Flex message: " + flexMessage);
+                                log.info("Flex message End ");
                                 sendFlexReplyFromJson(model.getReplyToken(), flexMessage, "Todo List");
                             }
                         } else {
@@ -213,6 +220,7 @@ public class LineService {
 
     // 新增：直接以 FlexMessage 回覆（使用 LINE Messaging SDK 的 FlexMessage model）
     public void sendFlexReply(String replyToken, FlexMessage flex) {
+        log.info("sendFlexReply Start");
         if (flex == null) {
             log.warn("FlexMessage is null, will not send reply");
             return;
@@ -223,6 +231,7 @@ public class LineService {
                 false);
         try {
             messagingApiClient.replyMessage(replyMessageRequest).get();
+            log.info("sendFlexReply End");
             log.info("Flex reply success, replyToken: {}", replyToken);
         } catch (Exception e) {
             log.error("Flex reply failed, replyToken: {}", replyToken, e);
@@ -236,19 +245,14 @@ public class LineService {
             return;
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-            // --- START: 這是核心修正 ---
-            // 1. 將 JSON 字串反序列化成「FlexContainer」物件，而不是「FlexMessage」
+            log.info("sendFlexReplyFromJson Start");
             FlexContainer flexContainer = mapper.readValue(flexJson, FlexContainer.class);
-
             // 2. 建立一個 FlexMessage，並將剛剛的 container 包進去
             FlexMessage flexMessage = new FlexMessage(
                     altText == null || altText.isBlank() ? "為您查詢到的待辦事項" : altText,
                     flexContainer);
             // --- END: 修正結束 ---
-
+            log.info("sendFlexReplyFromJson End");
             // 3. 呼叫 sendFlexReply 方法來發送
             sendFlexReply(replyToken, flexMessage);
         } catch (Exception e) {

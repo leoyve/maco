@@ -85,7 +85,7 @@ Text: "明天有什麼事"
 JSON: {{ "intent": "queryTodo", "entities": {{ "task": null, "time": {{ "startDate": "{tomorrow_str} 00:00", "endDate": "{tomorrow_str} 23:59" }}, "location": null, "status": null }}, "is_clear": true, "recommendation": null }}
 ---
 Text: "我還有什麼事"
-JSON: {{ "intent": "queryTodo", "entities": {{ "task": null, "time": {{ "startDate": "{today_str} 00:00", "endDate": "9999/12/31 23:59" }}, "location": null, "status": null }}, "is_clear": true, "recommendation": null }}
+JSON: {{ "intent": "queryTodo", "entities": {{ "task": null, "time": {{ "startDate": "{today_str} 00:00", "endDate": "9999-12-31 23:59" }}, "location": null, "status": null }}, "is_clear": true, "recommendation": null }}
 ---
 TASK:
 Text: "{text}"

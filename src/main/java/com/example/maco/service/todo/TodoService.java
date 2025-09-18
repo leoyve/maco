@@ -46,12 +46,19 @@ public class TodoService {
     }
 
     public List<TodoResult> getTodoSummary(String userToken, String startDate, String endDate) {
-        Instant start = DateTimeUtils.parseToInstant(startDate);
-        Instant end = DateTimeUtils.parseToInstant(endDate);
+        Instant start = DateTimeUtils.parseToInstant(checkDateFormat(startDate));
+        Instant end = DateTimeUtils.parseToInstant(checkDateFormat(endDate));
         if (start.isAfter(end)) {
             throw new DomainException("Start date must be before end date");
         }
         return todoRepo.findTodoByTimeRange(userToken, start, end);
+    }
+
+    private String checkDateFormat(String dateStr) {
+        if (dateStr == null || !dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            throw new DomainException("Date must be in YYYY-MM-DD format: " + dateStr);
+        }
+        return dateStr;
     }
 
     @Transactional
