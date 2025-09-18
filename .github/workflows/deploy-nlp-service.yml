@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'NLPService/**'
-      - '.github/workflows/deploy-python-nlp.yml'
+      - '.github/workflows/deploy-nlp-service.yml'
 
 env:
   GCP_PROJECT: even-acumen-472211-n2 # 您的專案ID

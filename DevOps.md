@@ -144,4 +144,21 @@ aws ec2 create-vpc-endpoint --vpc-id <vpc-id> --service-name com.amazonaws.ap-no
 - AWS CLI 文件：https://docs.aws.amazon.com/cli/
 - ECR 文件：https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html
 
+### CICD查找Provider
+```bash
+gcloud iam workload-identity-pools providers describe github-provider \
+  --project="even-acumen-472211-n2" \
+  --location="global" \
+  --workload-identity-pool="github-actions-pool" \
+  --format="value(name)"
+```
+### CICD中查找GCP的Account
+```bash
+gcloud iam service-accounts list
+```
+
+
+asia-east1-docker.pkg.dev/even-acumen-472211-n2/maestro-java-backend/maestro-java-backend
+asia-east1-docker.pkg.dev/even-acumen-472211-n2/maestro-java-backend/maestro-java-backend
+
 
