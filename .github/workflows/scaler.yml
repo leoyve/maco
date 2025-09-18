@@ -1,0 +1,65 @@
+name: Scheduled Cloud Run Scaler
+
+on:
+  schedule:
+    # 【關鍵】使用 cron 語法設定排程，注意這是 UTC 時間
+    # 台灣時間 (UTC+8) 早上 9:00，等於 UTC 時間凌晨 1:00
+    - cron: '0 1 * * *'
+    # 台灣時間 (UTC+8) 晚上 22:30，等於 UTC 時間下午 14:30
+    - cron: '30 14 * * *'
+
+  # 加上這一段，可以讓您在 GitHub 頁面上手動觸發此流程，方便測試
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT: even-acumen-472211-n2
+  GCP_REGION: asia-east1
+  JAVA_SERVICE: maestro-java-backend
+  PYTHON_SERVICE: maestro-python-nlp
+
+jobs:
+  scale-up:
+    # 【關鍵】設定條件，只有在 UTC 1:00 (台灣 9:00) 的排程才執行
+    if: github.event.schedule == '0 1 * * *'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+      
+      - name: Scale Up Java Service
+        run: gcloud run services update ${{ env.JAVA_SERVICE }} --min-instances=1 --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT }}
+        
+      - name: Scale Up Python Service
+        run: gcloud run services update ${{ env.PYTHON_SERVICE }} --min-instances=1 --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT }}
+
+  scale-down:
+    # 【關鍵】設定條件，只有在 UTC 14:30 (台灣 22:30) 的排程才執行
+    if: github.event.schedule == '30 14 * * *'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+        
+      - name: Scale Down Java Service
+        run: gcloud run services update ${{ env.JAVA_SERVICE }} --min-instances=0 --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT }}
+        
+      - name: Scale Down Python Service
+        run: gcloud run services update ${{ env.PYTHON_SERVICE }} --min-instances=0 --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT }}

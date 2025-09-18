@@ -55,7 +55,7 @@ public class TodoService {
     }
 
     private String checkDateFormat(String dateStr) {
-        if (dateStr == null || !dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        if (dateStr == null || !dateStr.matches("\\d{4}-\\d{2}-\\d{2} .*")) {
             throw new DomainException("Date must be in YYYY-MM-DD format: " + dateStr);
         }
         return dateStr;
