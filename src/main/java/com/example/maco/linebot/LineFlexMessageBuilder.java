@@ -77,26 +77,27 @@ public class LineFlexMessageBuilder {
         box.put("paddingTop", "md");
         box.put("alignItems", "center");
 
-        // Status Icon (✓ or ●)
-        ObjectNode statusIconBox = box.putObject("iconBox"); // A placeholder, we'll build this next
+        // safe access to entities
+        var ent = todo.getEntities();
 
-        // Task Details (Title and Date)
-        ObjectNode detailsBox = box.putObject("detailsBox"); // Placeholder
+        // build components
+        ObjectNode statusIconWrapper = buildStatusIconBox(ent != null ? ent.getStatus() : null);
+        ObjectNode detailsWrapper = buildDetailsWrapper(todo);
+        ObjectNode buttonWrapper = buildButtonWrapper(todo, ent != null ? ent.getStatus() : null);
 
-        // Action Buttons (Complete/Modify)
-        ObjectNode buttonBox = box.putObject("buttonBox"); // Placeholder
+        ((ArrayNode) box.putArray("contents")).add(statusIconWrapper).add(detailsWrapper).add(buttonWrapper);
+        return box;
+    }
 
-        // --- Build Status Icon ---
+    private ObjectNode buildStatusIconBox(String status) {
         ObjectNode statusIconContents = objectMapper.createObjectNode();
         statusIconContents.put("type", "text");
         statusIconContents.put("flex", 0);
-        if ("DONE".equals(todo.getEntities().getStatus())) {
-            statusIconContents.put("text", "✓");
-            statusIconContents.put("color", "#1DB446");
+        boolean done = "DONE".equals(status);
+        statusIconContents.put("text", done ? "✓" : "●");
+        statusIconContents.put("color", done ? "#1DB446" : "#FFB74D");
+        if (done) {
             statusIconContents.put("weight", "bold");
-        } else {
-            statusIconContents.put("text", "●");
-            statusIconContents.put("color", "#FFB74D");
         }
 
         ObjectNode statusIconWrapper = objectMapper.createObjectNode();
@@ -105,60 +106,72 @@ public class LineFlexMessageBuilder {
         statusIconWrapper.put("width", "20px");
         statusIconWrapper.put("alignItems", "center");
         ((ArrayNode) statusIconWrapper.putArray("contents")).add(statusIconContents);
+        return statusIconWrapper;
+    }
 
-        // --- Build Task Details ---
+    private ObjectNode buildDetailsWrapper(TodoResult todo) {
+        var ent = todo.getEntities();
+        String task = ent != null && ent.getTask() != null ? ent.getTask() : "未命名待辦";
+        String location = ent != null && ent.getLocation() != null ? ent.getLocation() : "";
+
+        // title
         ObjectNode titleText = objectMapper.createObjectNode();
         titleText.put("type", "text");
-        titleText.put("text", todo.getEntities().getTask());
+        titleText.put("text", task);
         titleText.put("weight", "bold");
-        if ("DONE".equals(todo.getEntities().getStatus())) {
+        titleText.put("wrap", true);
+        titleText.put("maxLines", 2);
+        if (ent != null && "DONE".equals(ent.getStatus())) {
             titleText.put("decoration", "line-through");
             titleText.put("color", "#0c0808ff");
         }
 
-        // Build Time/Location Summary
+        // time/location
         ObjectNode timeText = objectMapper.createObjectNode();
         timeText.put("type", "text");
         timeText.put("wrap", true);
         timeText.put("maxLines", 2);
+        timeText.put("size", "xs");
+        timeText.put("color", "#B2B2B2");
 
-        Instant ts = DateTimeUtils.parseToInstant(
-                todo.getEntities().getTime() != null ? todo.getEntities().getTime().getTimestamp() : null);
-        String location = todo.getEntities().getLocation() == null ? "" : todo.getEntities().getLocation();
+        Instant ts = null;
+        if (ent != null && ent.getTime() != null) {
+            ts = DateTimeUtils.parseToInstant(ent.getTime().getTimestamp());
+        }
 
         if (ts != null) {
             ZoneId zone = ZoneId.systemDefault();
             String dayLabel = DateTimeUtils.formatFlexDayLabel(ts, zone);
             String timeStr = DateTimeUtils.formatFlexTime(ts, zone);
             String composed = (dayLabel + " " + timeStr).trim();
-            if (location != null && !location.isEmpty()) {
-                composed += "\n @ " + location;
+            if (!location.isBlank()) {
+                // place location on new line and omit if empty
+                composed = composed + "\n@ " + location;
             }
-
             timeText.put("text", composed);
-        } else if (!location.isEmpty()) {
-            timeText.put("text", location);
+        } else if (!location.isBlank()) {
+            timeText.put("text", "@ " + location);
         } else {
-            timeText.put("text", "Not Time or Location");
+            timeText.put("text", "未指定時間/地點");
         }
-        // version
-        timeText.put("size", "xs");
-        timeText.put("color", "#B2B2B2");
 
         ObjectNode detailsWrapper = objectMapper.createObjectNode();
         detailsWrapper.put("type", "box");
         detailsWrapper.put("layout", "vertical");
         detailsWrapper.put("flex", 3);
         ((ArrayNode) detailsWrapper.putArray("contents")).add(titleText).add(timeText);
+        return detailsWrapper;
+    }
 
-        // --- Build Action Buttons (only for non-DONE items) ---
+    private ObjectNode buildButtonWrapper(TodoResult todo, String status) {
         ObjectNode buttonWrapper = objectMapper.createObjectNode();
         buttonWrapper.put("type", "box");
         buttonWrapper.put("layout", "horizontal");
         buttonWrapper.put("flex", 2);
         buttonWrapper.put("spacing", "sm");
 
-        if (!"DONE".equals(todo.getEntities().getStatus())) {
+        // only non-DONE show complete button
+        if (!"DONE".equals(status)) {
             ObjectNode completeButton = objectMapper.createObjectNode();
             completeButton.put("type", "button");
             completeButton.put("style", "primary");
@@ -167,13 +180,12 @@ public class LineFlexMessageBuilder {
             ObjectNode completeAction = completeButton.putObject("action");
             completeAction.put("type", "postback");
             completeAction.put("label", "完成");
-            // 使用 todo_id 與 Controller 的解析一致
             completeAction.put("data", "action=complete_todo&todo_id=" + todo.getId());
-            completeAction.put("displayText", "完成「" + todo.getEntities().getTask() + "」");
-
+            completeAction.put("displayText",
+                    "完成「" + (todo.getEntities() != null ? todo.getEntities().getTask() : "") + "」");
             ((ArrayNode) buttonWrapper.putArray("contents")).add(completeButton);
-
         }
+
         ObjectNode deleteButton = objectMapper.createObjectNode();
         deleteButton.put("type", "button");
         deleteButton.put("style", "secondary");
@@ -183,14 +195,10 @@ public class LineFlexMessageBuilder {
         deleteAction.put("type", "postback");
         deleteAction.put("label", "刪除");
         deleteAction.put("data", "action=delete_todo&todo_id=" + todo.getId());
-        deleteAction.put("displayText", "刪除「" + todo.getEntities().getTask() + "」");
-
+        deleteAction.put("displayText", "刪除「" + (todo.getEntities() != null ? todo.getEntities().getTask() : "") + "」");
         ((ArrayNode) buttonWrapper.withArray("contents")).add(deleteButton);
 
-        // Now, replace placeholders with actual built components
-        ((ArrayNode) box.putArray("contents")).add(statusIconWrapper).add(detailsWrapper).add(buttonWrapper);
-
-        return box;
+        return buttonWrapper;
     }
 
     // /**

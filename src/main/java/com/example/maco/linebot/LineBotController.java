@@ -30,13 +30,29 @@ public class LineBotController {
     @EventMapping
     public void handleTextMessageEvent(MessageEvent event) {
         if (event.message() instanceof TextMessageContent textMsg) {
-            if ("功能說明".equals(textMsg.text())) {
+            if ("功能說明".equals(textMsg.text()) || "幫助".equals(textMsg.text()) || "help".equalsIgnoreCase(textMsg.text())
+                    || "help me".equalsIgnoreCase(textMsg.text())) {
                 String message = "Maestro 助理 v1.1 功能說明\n\n"
-                        + "我可以幫您：\n"
-                        + "✅ 新增待辦事項 (e.g., 明天下午三點去總行開會[時間][地點][事項])\n"
-                        + "✅ 查詢待辦事項 (e.g., 查詢本週的待辦事項)\n"
-                        + "✅ 完成/刪除事項 (透過查詢列表中的按鈕)\n\n"
-                        + "P.S. 目前還不支援直接修改事項內容，建議您可以先刪除再新增喔！";
+                        + "🧭 我會做的事\n"
+                        + "新增待辦、查詢「今天/這週/本月」待辦、標記完成、刪除待辦；新增/查詢體重。\n"
+                        + "\n"
+                        + "🗣️ 你可以這樣說\n"
+                        + "	•	明天下午三點跟 David 開會\n"
+                        + "	•	這週有什麼事\n"
+                        + "	•	週末去台中出差\n"
+                        + "	•	接下來還有什麼待辦事項\n"
+                        + "	•	今天早上體重 75.5 公斤\n"
+                        + "	•	最新的體重\n"
+                        + "\n"
+                        + "⏰ 時間規則（台北時區）\n"
+                        + "	•	相對日期：今天/明天/這週/下週/本月/週末\n"
+                        + "	•	時段補時：早上09:00｜中午12:00｜下午15:00｜晚上19:00｜睡前22:00\n"
+                        + "\n"
+                        + "📍 地點\n"
+                        + "	•	抓「在/到/去/於」後面的詞：在台大醫院、去小巨蛋…\n"
+                        + "\n"
+                        + "🙋 不清楚？\n"
+                        + "	•	說 幫助(help) 或 功能說明\n";
                 lineService.sendReply(event.replyToken(), message);
                 return;
             }
