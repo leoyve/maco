@@ -1,10 +1,19 @@
 # Spring Boot LINE AI Manager Bot
 
 [![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://www.java.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
 [![LINE API](https://img.shields.io/badge/LINE%20API-Messaging-green.svg)](https://developers.line.biz/)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
+[![Postgres](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org)
+[![Flyway](https://img.shields.io/badge/Flyway-11-orange.svg)](https://flywaydb.org)
+[![Docker](https://img.shields.io/badge/Docker-Container-blue.svg)](https://www.docker.com)
+[![GCP](https://img.shields.io/badge/GCP-Google%20Cloud-blue.svg)](https://cloud.google.com)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-deployed-green.svg)](https://cloud.google.com/run)
+[![Cloud SQL](https://img.shields.io/badge/Cloud%20SQL-Postgres-blue.svg)](https://cloud.google.com/sql)
+[![CI](https://github.com/leoyve/maco/actions/workflows/deploy-java-backend.yml/badge.svg)](https://github.com/leoyve/maco/actions)
+[![CI](https://github.com/leoyve/maco/actions/workflows/deploy-nlp-service.yml/badge.svg)](https://github.com/leoyve/maco/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
 
@@ -90,6 +99,7 @@
 
 ---
 ## 待辦
+- 可以考慮查詢作非同步，改用Push
 - FlexMessage 分頁功能
 - 使用者一次輸入，一次幫我新增完待辦
  ```text
@@ -299,6 +309,3 @@ Maestro/
 ```
 
 ---
-
-## 授權 (License)
-This project is licensed under the MIT License. For details, see the LICENSE file.
