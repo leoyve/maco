@@ -9,10 +9,10 @@
 [![Flyway](https://img.shields.io/badge/Flyway-11-orange.svg)](https://flywaydb.org)
 [![Docker](https://img.shields.io/badge/Docker-Container-blue.svg)](https://www.docker.com)
 [![GCP](https://img.shields.io/badge/GCP-Google%20Cloud-blue.svg)](https://cloud.google.com)
-[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-deployed-green.svg)](https://cloud.google.com/run)
-[![Cloud SQL](https://img.shields.io/badge/Cloud%20SQL-Postgres-blue.svg)](https://cloud.google.com/sql)
 [![CI](https://github.com/leoyve/maco/actions/workflows/deploy-java-backend.yml/badge.svg)](https://github.com/leoyve/maco/actions)
 [![CI](https://github.com/leoyve/maco/actions/workflows/deploy-nlp-service.yml/badge.svg)](https://github.com/leoyve/maco/actions)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-deployed-green.svg)](https://cloud.google.com/run)
+[![Cloud SQL](https://img.shields.io/badge/Cloud%20SQL-Postgres-blue.svg)](https://cloud.google.com/sql)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
