@@ -1,4 +1,4 @@
-package com.example.maco.linebot;
+package com.example.maco.linebot.builder;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

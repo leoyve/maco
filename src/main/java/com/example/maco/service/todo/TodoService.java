@@ -29,12 +29,9 @@ public class TodoService {
             throw new DomainException("Todo entities are required");
         }
 
-        // 若為新增代辦，task 必填
-        if ("addTodo".equals(model.getIntent())) {
-            String task = entities.getTask();
-            if (task == null || task.isBlank()) {
-                throw new DomainException("Task is required for addTodo intent");
-            }
+        String task = entities.getTask();
+        if (task == null || task.isBlank()) {
+            throw new DomainException("Task is required for addTodo intent");
         }
         // 檢查狀態
         String status = entities.getStatus();
@@ -62,19 +59,19 @@ public class TodoService {
     }
 
     @Transactional
-    public int deleteTodoById(String userToken, Long todoId) {
+    public boolean deleteTodoById(String userToken, Long todoId) {
         if (todoId == null) {
             throw new DomainException("Todo ID must not be null");
         }
-        return todoRepo.deleteById(userToken, todoId);
+        return todoRepo.deleteById(userToken, todoId) > 0;
     }
 
     @Transactional
-    public int completeTodoById(String userToken, Long todoId) {
+    public boolean completeTodoById(String userToken, Long todoId) {
         if (todoId == null) {
             throw new DomainException("Todo ID must not be null");
         }
-        return todoRepo.completeById(userToken, todoId, Instant.now());
+        return todoRepo.completeById(userToken, todoId, Instant.now()) > 0;
     }
 
 }

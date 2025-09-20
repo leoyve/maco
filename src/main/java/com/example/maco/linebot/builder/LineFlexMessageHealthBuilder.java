@@ -1,7 +1,8 @@
-package com.example.maco.linebot;
+package com.example.maco.linebot.builder;
 
 import com.example.maco.domain.model.todo.TodoResult;
 import com.example.maco.infra.jpa.util.DateTimeUtils;
+import com.example.maco.service.domain.DomainKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,16 +20,19 @@ import java.util.List;
 import java.time.*;
 
 @Component
-public class LineFlexMessageBuilder {
+public class LineFlexMessageHealthBuilder implements LineFlexMessageBuilder<TodoResult> {
 
-    private static final Logger log = LoggerFactory.getLogger(LineFlexMessageBuilder.class);
-    private final ObjectMapper objectMapper = new ObjectMapper(); // Reusable ObjectMapper
-
-    // 快取 template 作為 ObjectNode（只讀一次）
+    private static final Logger log = LoggerFactory.getLogger(LineFlexMessageHealthBuilder.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private ObjectNode cachedTodoTemplate;
 
+    @Override
+    public String getBuilderKey() {
+        return DomainKeys.HEALTH;
+    }
+
     @PostConstruct
-    private void loadTemplate() {
+    public void loadTemplate() {
         try (InputStream is = new ClassPathResource("flex/todo_list_template.json").getInputStream()) {
             String todoTemplateJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             cachedTodoTemplate = (ObjectNode) objectMapper.readTree(todoTemplateJson);
@@ -38,7 +42,7 @@ public class LineFlexMessageBuilder {
         }
     }
 
-    public String buildTodoListJson(List<TodoResult> todos) {
+    public String buildObjectListJson(List<TodoResult> todos) {
         try {
             if (cachedTodoTemplate == null) {
                 log.warn("No cached template available");
