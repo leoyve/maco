@@ -39,7 +39,7 @@ public class LineService {
                 false);
         try {
             messagingApiClient.replyMessage(replyMessageRequest).get();
-            log.info("Reply success, replyToken: {}, message: {}", replyToken, message);
+            // log.info("Reply success, replyToken: {}, message: {}", replyToken, message);
         } catch (Exception e) {
             log.error("Reply failed, replyToken: {}, message: {}", replyToken, message, e);
         }
@@ -58,8 +58,7 @@ public class LineService {
                 false);
         try {
             messagingApiClient.replyMessage(replyMessageRequest).get();
-            log.info("sendFlexReply End");
-            log.info("Flex reply success, replyToken: {}", replyToken);
+            // log.info("Flex reply success, replyToken: {}", replyToken);
         } catch (Exception e) {
             log.error("Flex reply failed, replyToken: {}", replyToken, e);
         }

@@ -49,8 +49,8 @@ public class LineBotController {
                     event.replyToken(),
                     textMsg.id(),
                     null);
-            routeService.handleTextMessage(dto);
             log.info("收到文字訊息: userId={}, text={}", userId, textMsg.text());
+            routeService.handleTextMessage(dto);
         } else if (event.message() instanceof ImageMessageContent) {
             lineService.sendReply(event.replyToken(), "收到你的圖片囉！");
             log.info("收到圖片訊息: userId={}", event.source().userId());

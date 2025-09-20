@@ -23,7 +23,7 @@ import java.time.*;
 public class LineFlexMessageHealthBuilder implements LineFlexMessageBuilder<TodoResult> {
 
     private static final Logger log = LoggerFactory.getLogger(LineFlexMessageHealthBuilder.class);
-    private final ObjectMapper objectMapper = new ObjectMapper(); // Reusable ObjectMapper
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private ObjectNode cachedTodoTemplate;
 
     @Override

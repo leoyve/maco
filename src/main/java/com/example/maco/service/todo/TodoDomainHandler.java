@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RequiredArgsConstructor
+@Service
 public class TodoDomainHandler implements DomainHandler {
     private static final Logger log = LoggerFactory.getLogger(TodoDomainHandler.class);
 
@@ -112,7 +114,8 @@ public class TodoDomainHandler implements DomainHandler {
             todoService.insertTodo(model.getUserToken(), todoResult);
             reply = todoResult.toUserMessageForAdd();
             lineService.sendReply(model.getReplyToken(), reply);
-            log.info("Todo added successfully, userId={}, messageId={}", model.getUserToken(), model.getMessageId());
+            // log.info("Todo added successfully, userId={}, messageId={}",
+            // model.getUserToken(), model.getMessageId());
         } catch (Exception ex) {
             log.error("Failed to add todo, userId={}, messageId={}", model.getUserToken(), model.getMessageId(),
                     ex);
