@@ -12,6 +12,7 @@ import com.example.maco.domain.dto.LineMessageDto;
 import com.example.maco.linebot.model.PostbackParams;
 import com.example.maco.linebot.service.LineService;
 import com.example.maco.linebot.service.RouteService;
+import com.example.maco.service.domain.DomainAction;
 import com.linecorp.bot.spring.boot.handler.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.handler.annotation.LineMessageHandler;
 import com.linecorp.bot.webhook.model.ImageMessageContent;
@@ -41,6 +42,29 @@ public class LineBotController {
             }
 
             String userId = event.source().userId();
+
+            if (DomainAction.WEIGHT_QUERY.action().equalsIgnoreCase(textMsg.text())) {
+                log.info("接收到固定指令 - 查詢體重趨勢: userId={}", userId);
+
+                // 建立一個 DTO，並「模擬」Postback 參數來重用分派邏輯
+                LineMessageDto dto = new LineMessageDto(
+                        userId,
+                        textMsg.text(), // 訊息內容依然保留
+                        LocalDateTime.now(),
+                        "text_command", // 可以用一個新的 type 來區分
+                        event.replyToken(),
+                        textMsg.id(),
+                        null);
+
+                Map<String, String> params = Map.of(
+                        PostbackParams.MODEL, DomainAction.WEIGHT_ADD.domain(),
+                        PostbackParams.ACTION, DomainAction.WEIGHT_QUERY.action());
+                dto.setPostbackParams(params);
+
+                routeService.dispatchHandler(dto);
+                return;
+            }
+
             LineMessageDto dto = new LineMessageDto(
                     userId,
                     textMsg.text(),

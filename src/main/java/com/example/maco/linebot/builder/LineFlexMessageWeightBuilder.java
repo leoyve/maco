@@ -20,15 +20,15 @@ import java.util.List;
 import java.time.*;
 
 @Component
-public class LineFlexMessageHealthBuilder implements LineFlexMessageBuilder<TodoResult> {
+public class LineFlexMessageWeightBuilder implements LineFlexMessageBuilder<TodoResult> {
 
-    private static final Logger log = LoggerFactory.getLogger(LineFlexMessageHealthBuilder.class);
+    private static final Logger log = LoggerFactory.getLogger(LineFlexMessageWeightBuilder.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private ObjectNode cachedTodoTemplate;
 
     @Override
     public String getBuilderKey() {
-        return DomainKeys.HEALTH;
+        return DomainKeys.WEIGHT;
     }
 
     @PostConstruct

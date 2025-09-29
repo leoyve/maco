@@ -5,7 +5,9 @@ public enum DomainAction {
     TODO_DELETE("todo", "delete"),
     TODO_ADD("todo", "addTodo"),
     TODO_QUERY("todo", "queryTodo"),
-    HEALTH_DELETE("health", "delete"); // 若 health 也有 delete 行為
+    WEIGHT_ADD("weight", "addWeight"),
+    WEIGHT_QUERY("weight", "queryWeight"),
+    WEIGHT_DELETE("weight", "delete"); // 若 weight 也有 delete 行為
 
     private final String domain;
     private final String action;

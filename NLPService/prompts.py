@@ -231,22 +231,13 @@ def get_health_prompt(text: str) -> str:
     # EXAMPLES:
     ---
     Text: "今天早上體重 75.5 公斤"
-    JSON: {{ "intent": "addWeightLog", "entities": {{ "weight": {{ "value": 75.5, "unit": "kg" }}, "time": {{"timestamp": "{today_str} 09:00"}} }}, "is_clear": true, "recommendation": null }}
+    JSON: {{ "intent": "addWeight", "entities": {{ "weight":"75.5" , "time": {{"timestamp": "{A.today_str} 09:00"}} }}, "is_clear": true, "recommendation": null }}
     ---
     Text: "100"
-    JSON: {{ "intent": "addWeightLog", "entities": {{ "weight": {{ "value": 100, "unit": "kg" }}, "time": {{"timestamp": "{today_str} 09:00"}} }}, "is_clear": true, "recommendation": null }}
+    JSON: {{ "intent": "addWeight", "entities": {{ "weight":"100", "time": {{"timestamp": "{A.today_str} 09:00"}} }}, "is_clear": true, "recommendation": null }}
     ---
-    Text: "我今天的體重是多少？"
-    JSON: {{ "intent": "queryWeightLog", "entities": {{"time": {{"startDate": "{today_str} 00:00", "endDate": "{today_str} 23:59"}}}}, "is_clear": true, "recommendation": null }}
-    ---
-    Text: "幫我查一下我這禮拜的體重紀錄"
-    JSON: {{ "intent": "queryWeightLog", "entities": {{ "time": {{ "startDate": "{A.this_monday_start} 00:00", "endDate": "{A.this_sunday_end} 23:59" }} }}, "is_clear": true, "recommendation": null }}
-    ---
-    Text: "最新的體重"
-    JSON: {{ "intent": "queryWeightLog", "entities": {{"time": "latest" }}, "is_clear": true, "recommendation": null }}
-    ---
-    Text: "下個月的體重"
-    JSON: {{ "intent": "queryWeightLog", "entities": {{"time": "latest" }}, "is_clear": false, "recommendation": "體重不能預知！" }}
+    Text: "昨天量體重是 75.5"
+    JSON: {{ "intent": "addWeight", "entities": {{ "weight":"75.5", "time": {{"timestamp": "{A.yesterday_str} 09:00"}} }}, "is_clear": true, "recommendation": null }}
     ---
     """).strip()
 
